@@ -26,7 +26,12 @@ content >
       placements: [
         {
           type: "Placement",
-          area: "header",
+          target: {
+  type: "AreaReference",
+  path: "header",
+  segments: ["header"],
+  slots: false,
+},
 
           component: {
             type: "Component",
@@ -45,7 +50,12 @@ content >
 
         {
           type: "Placement",
-          area: "content",
+          target: {
+  type: "AreaReference",
+  path: "content",
+  segments: ["content"],
+  slots: false,
+},
 
           component: {
             type: "Component",
@@ -71,15 +81,91 @@ content >
     });
   });
 
-  test("returns diagnostics for invalid syntax", () => {
-    const source = `page "home" MainFrame
+ test("returns diagnostics for invalid syntax", () => {
+  const source = `page "home" MainFrame
 
 content
-    Counter(label: "Count")`;
+    Button(label: "Continue")`;
 
-    const result = parsePaixPage(source);
+  const result = parsePaixPage(source);
 
-    expect(result.ast).toBeNull();
-    expect(result.diagnostics.length).toBeGreaterThan(0);
+  expect(result.ast).toBeNull();
+  expect(result.diagnostics.length).toBeGreaterThan(0);
+});
+
+test("parses an ordered stack placed into slots", () => {
+  const source = `page "navigation" MainFrame
+
+navigation.slots > [
+    Button(label: "Home"),
+    Button(label: "Catalogue"),
+    Button(label: "Contact")
+]`;
+
+  const result = parsePaixPage(source);
+
+  expect(result.diagnostics).toEqual([]);
+  expect(result.ast?.placements).toHaveLength(1);
+
+  const placement = result.ast?.placements[0];
+
+  expect(placement?.type).toBe("StackPlacement");
+
+  if (!placement || placement.type !== "StackPlacement") {
+    throw new Error("Expected a StackPlacement");
+  }
+
+  expect(placement.target).toEqual({
+    type: "AreaReference",
+    path: "navigation.slots",
+    segments: ["navigation", "slots"],
+    slots: true,
   });
+
+  expect(placement.stack).toEqual({
+    type: "Stack",
+
+    items: [
+      {
+        type: "Component",
+        name: "Button",
+
+        arguments: [
+          {
+            type: "Argument",
+            name: "label",
+            state: false,
+            value: "Home",
+          },
+        ],
+      },
+      {
+        type: "Component",
+        name: "Button",
+
+        arguments: [
+          {
+            type: "Argument",
+            name: "label",
+            state: false,
+            value: "Catalogue",
+          },
+        ],
+      },
+      {
+        type: "Component",
+        name: "Button",
+
+        arguments: [
+          {
+            type: "Argument",
+            name: "label",
+            state: false,
+            value: "Contact",
+          },
+        ],
+      },
+    ],
+  });
+});
 });

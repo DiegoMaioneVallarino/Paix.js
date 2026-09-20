@@ -1,8 +1,12 @@
 import { useState } from "react";
-import type { PaixPageParseResult } from "../../paix/parser/parse";
 import type { PaixFileType } from "../../project/project.types";
 import { AstViewer } from "./AstViewer";
+import type {
+  PaixComponentDefinitionNode,
+  PaixPageNode,
+} from "../../paix/ast/ast.types";
 
+import type { PaixDiagnostic } from "../../paix/diagnostics/diagnostic.types";
 type DiagnosticTab =
   | "problems"
   | "ast"
@@ -11,7 +15,15 @@ type DiagnosticTab =
 
 interface DiagnosticsPanelProps {
   fileType: PaixFileType;
-  parseResult: PaixPageParseResult;
+
+  parseResult: {
+    ast:
+      | PaixPageNode
+      | PaixComponentDefinitionNode
+      | null;
+
+    diagnostics: PaixDiagnostic[];
+  };
 }
 
 export function DiagnosticsPanel({
@@ -21,8 +33,10 @@ export function DiagnosticsPanel({
   const [activeTab, setActiveTab] =
     useState<DiagnosticTab>("problems");
 
-  const parserAvailable = fileType === "page";
-  const problemCount = parseResult.diagnostics.length;
+const parserAvailable =
+  fileType === "page" ||
+  fileType === "component";
+    const problemCount = parseResult.diagnostics.length;
 
   return (
     <footer className="diagnostics-panel panel">
@@ -97,15 +111,14 @@ export function DiagnosticsPanel({
                 {parseResult.diagnostics.map(
                   (diagnostic, index) => (
                     <div
-                      className="diagnostic-error"
-                      key={`${diagnostic.line}-${diagnostic.column}-${index}`}
-                    >
-                      <span className="diagnostic-error-icon">
-                        !
-                      </span>
+                        className={`diagnostic-entry diagnostic-${diagnostic.severity}`}
+                        key={`${diagnostic.line}-${diagnostic.column}-${index}`}
+                        >
+                        <span className="diagnostic-entry-icon">
+                            {diagnostic.severity === "error" ? "!" : "⚠"}
+                        </span>
 
-                      <div className="diagnostic-error-body">
-                        <strong>
+                <div className="diagnostic-entry-body">                        <strong>
                           {diagnostic.source} error
                         </strong>
 

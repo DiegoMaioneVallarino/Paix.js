@@ -6,7 +6,7 @@ export function registerPaixLanguage(monaco: Monaco) {
  const isRegistered = monaco.languages
   .getLanguages()
   .some((language: { id: string }) => language.id === PAIX_LANGUAGE_ID);
-  
+
   if (!isRegistered) {
     monaco.languages.register({
       id: PAIX_LANGUAGE_ID,
@@ -72,6 +72,11 @@ export function registerPaixLanguage(monaco: Monaco) {
       "shared",
       "resource",
       "finally",
+      "slice",
+"columns",
+"rows",
+"grid",
+"slots",
     ],
 
     constants: ["true", "false", "none", "empty"],

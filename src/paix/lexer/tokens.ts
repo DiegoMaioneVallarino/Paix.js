@@ -85,12 +85,55 @@ export const RightParenthesis = createToken({
   name: "RightParenthesis",
   pattern: /\)/,
 });
+export const Plus = createToken({
+  name: "Plus",
+  pattern: /\+/,
+});
+
+export const Minus = createToken({
+  name: "Minus",
+  pattern: /-/,
+});
+
+export const ComponentKeyword = createToken({
+  name: "ComponentKeyword",
+  pattern: /component\b/,
+});
+
+export const ParametersKeyword = createToken({
+  name: "ParametersKeyword",
+  pattern: /parameters\b/,
+});
+
+export const StateKeyword = createToken({
+  name: "StateKeyword",
+  pattern: /state\b/,
+});
+
+export const Dot = createToken({
+  name: "Dot",
+  pattern: /\./,
+});
+
+export const LeftBracket = createToken({
+  name: "LeftBracket",
+  pattern: /\[/,
+});
+
+export const RightBracket = createToken({
+  name: "RightBracket",
+  pattern: /\]/,
+});
 
 export const allTokens: TokenType[] = [
   WhiteSpace,
   Comment,
 
+  ComponentKeyword,
+  ParametersKeyword,
+  StateKeyword,
   PageKeyword,
+
   TrueKeyword,
   FalseKeyword,
   NoneKeyword,
@@ -105,8 +148,15 @@ export const allTokens: TokenType[] = [
   GreaterThan,
   Colon,
   Comma,
+  Dot,
+  Plus,
+  Minus,
+
   LeftParenthesis,
   RightParenthesis,
+  LeftBracket,
+  RightBracket,
 ];
 
 export const paixLexer = new Lexer(allTokens);
+

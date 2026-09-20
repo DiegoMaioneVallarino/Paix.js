@@ -1,10 +1,18 @@
-import type { PaixPageNode } from "../../paix/ast/ast.types";
+import type {
+  PaixComponentDefinitionNode,
+  PaixPageNode,
+} from "../../paix/ast/ast.types";
 
 interface AstViewerProps {
-  ast: PaixPageNode | null;
+  ast:
+    | PaixPageNode
+    | PaixComponentDefinitionNode
+    | null;
 }
 
-export function AstViewer({ ast }: AstViewerProps) {
+export function AstViewer({
+  ast,
+}: AstViewerProps) {
   if (!ast) {
     return (
       <div className="diagnostic-placeholder">

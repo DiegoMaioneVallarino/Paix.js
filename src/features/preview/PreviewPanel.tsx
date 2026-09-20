@@ -1,15 +1,15 @@
 import { useState } from "react";
-import type { PaixPageNode } from "../../paix/ast/ast.types";
 import { PaixRenderer } from "../../runtime/PaixRenderer";
+import type { PaixCompiledProject } from "../../paix/compiler/compiled.types";
 
 type PreviewDevice = "desktop" | "mobile";
 
 interface PreviewPanelProps {
-  ast: PaixPageNode | null;
+  program: PaixCompiledProject;
 }
 
 export function PreviewPanel({
-  ast,
+  program,
 }: PreviewPanelProps) {
   const [device, setDevice] =
     useState<PreviewDevice>("desktop");
@@ -46,7 +46,7 @@ export function PreviewPanel({
         <div
           className={`preview-canvas preview-${device}`}
         >
-          <PaixRenderer ast={ast} />
+          <PaixRenderer program={program} />
         </div>
       </div>
     </section>
