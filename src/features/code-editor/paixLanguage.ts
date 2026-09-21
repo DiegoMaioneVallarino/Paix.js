@@ -62,6 +62,7 @@ export function registerPaixLanguage(monaco: Monaco) {
       "otherwise",
       "place",
       "in",
+      "this",
       "use",
       "style",
       "styles",
@@ -107,7 +108,7 @@ export function registerPaixLanguage(monaco: Monaco) {
         [/[>&]/, "layoutOperator"],
         [/:/, "assignmentOperator"],
         [/[=+\-*/]/, "operator"],
-
+        [/\bthis\.[a-zA-Z][\w]*/, "variable.predefined"],
         [/[{}[\]()]/, "@brackets"],
         [/[a-zA-Z][a-zA-Z0-9_]*/, "identifier"],
         [/[,.]/, "delimiter"],

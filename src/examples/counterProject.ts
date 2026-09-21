@@ -38,6 +38,23 @@ horizontalCenteredArea slice horizontal centered 54 >
     "topArea"
     "horizontalCenterArea"
     "bottomArea"`,
+},"wireframes/CounterFrame.paix": {
+  id: "counter-frame",
+  name: "CounterFrame.paix",
+  path: "wireframes/CounterFrame.paix",
+  type: "wireframe",
+
+  content: `wireframe "CounterFrame"
+
+main slice horizontal 44 >
+    "labelArea"
+    "counterBodyArea"
+
+counterBodyArea slice horizontal 68 >
+    "valueArea"
+    "actionsArea"
+
+actionsArea slice columns 2`,
 },
     "pages/home.paix": {
       id: "home-page",
@@ -48,12 +65,12 @@ horizontalCenteredArea slice horizontal centered 54 >
       content: `page "home" MainFrame
 
 headerArea >
-    Text(value: "Hello Paix")
+    Text(value: "Paix Components")
 
 contentArea.slots > [
-    Button(label: "Home"),
-    Button(label: "Catalogue"),
-    Button(label: "Contact")
+    Counter(label: "Visitors"),
+    Counter(label: "Articles"),
+    Counter(label: "Subscribers")
 ]`,
     },
 
@@ -62,26 +79,30 @@ contentArea.slots > [
       name: "Counter.paix",
       path: "components/Counter.paix",
       type: "component",
+content: `component "Counter" CounterFrame
 
-      content: `component "Counter" CounterFrame
+parameters:
+    label: "Count"
 
 state:
     _count: 0
 
+labelArea >
+    Text(value: label)
+
 valueArea >
     Text(value: _count)
 
-actionsArea >
+actionsArea.slots > [
     Button(
         label: "Add",
         onClick: set_count(_count + 1)
-    )
-
-actionsArea >
+    ),
     Button(
         label: "Reset",
         onClick: set_count(0)
-    )`,
+    )
+]`,
     },
 
     "components/Header.paix": {

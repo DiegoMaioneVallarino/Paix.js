@@ -1,4 +1,6 @@
-import type { CSSProperties } from "react";
+import type {
+  CSSProperties,
+} from "react";
 
 import type {
   PaixComponentDefinitionNode,
@@ -7,9 +9,13 @@ import type {
   PaixWireframeNode,
 } from "../paix/ast/ast.types";
 
-import type { PaixCompiledProject } from "../paix/compiler/compiled.types";
+import type {
+  PaixCompiledProject,
+} from "../paix/compiler/compiled.types";
 
-import { registerStandardLibrary } from "../standard-library/registerStandardLibrary";
+import {
+  registerStandardLibrary,
+} from "../standard-library/registerStandardLibrary";
 
 import {
   componentRegistry,
@@ -18,9 +24,24 @@ import {
 
 import {
   evaluateExpression,
+  PAIX_INPUTS_SCOPE_KEY,
   type PaixScope,
 } from "./evaluateExpression";
-import { WireframeRenderer } from "./WireframeRenderer";
+
+import {
+  isPaixEventArgument,
+  resolvePaixEvent,
+} from "./EventRuntime";
+
+import {
+  usePaixState,
+  type PaixStateSetter,
+} from "./StateRuntime";
+
+import {
+  WireframeRenderer,
+} from "./WireframeRenderer";
+
 registerStandardLibrary();
 
 interface PaixRendererProps {
@@ -44,20 +65,19 @@ export function PaixRenderer({
     program.wireframes[page.wireframe];
 
   if (wireframe) {
-  return (
-    <div className="paix-page">
-      <ScopedWireframe
-        wireframe={wireframe}
-        placements={page.placements}
-        program={program}
-        scope={{}}
-        stack={[]}
-      />
-    </div>
-  );
-}
+    return (
+      <div className="paix-page">
+        <ScopedWireframe
+          wireframe={wireframe}
+          placements={page.placements}
+          program={program}
+          scope={{}}
+          stack={[]}
+        />
+      </div>
+    );
+  }
 
-  // Fallback temporal si no se encuentra el wireframe.
   return (
     <div className="paix-page">
       {page.placements.map(
@@ -103,18 +123,13 @@ function PagePlacement({
   );
 }
 
-interface PlacementContentProps {
-  placement: PaixPlacementNode;
-  program: PaixCompiledProject;
-  scope: PaixScope;
-  stack: string[];
-}
 interface ScopedWireframeProps {
   wireframe: PaixWireframeNode;
   placements: PaixPlacementNode[];
   program: PaixCompiledProject;
   scope: PaixScope;
   stack: string[];
+  setState?: PaixStateSetter;
 }
 
 function ScopedWireframe({
@@ -123,6 +138,7 @@ function ScopedWireframe({
   program,
   scope,
   stack,
+  setState,
 }: ScopedWireframeProps) {
   const renderArea = (
     areaName: string,
@@ -143,6 +159,7 @@ function ScopedWireframe({
           program={program}
           scope={scope}
           stack={stack}
+          setState={setState}
         />
       ),
     );
@@ -182,6 +199,7 @@ function ScopedWireframe({
         program={program}
         scope={scope}
         stack={stack}
+        setState={setState}
       />
     );
   };
@@ -194,11 +212,21 @@ function ScopedWireframe({
     />
   );
 }
+
+interface PlacementContentProps {
+  placement: PaixPlacementNode;
+  program: PaixCompiledProject;
+  scope: PaixScope;
+  stack: string[];
+  setState?: PaixStateSetter;
+}
+
 function PlacementContent({
   placement,
   program,
   scope,
   stack,
+  setState,
 }: PlacementContentProps) {
   if (placement.type === "Placement") {
     return (
@@ -207,6 +235,7 @@ function PlacementContent({
         program={program}
         scope={scope}
         stack={stack}
+        setState={setState}
       />
     );
   }
@@ -243,6 +272,7 @@ function PlacementContent({
               program={program}
               scope={scope}
               stack={stack}
+              setState={setState}
             />
           </div>
         ),
@@ -256,6 +286,7 @@ interface RuntimeComponentProps {
   program: PaixCompiledProject;
   scope: PaixScope;
   stack: string[];
+  setState?: PaixStateSetter;
 }
 
 function RuntimeComponent({
@@ -263,6 +294,7 @@ function RuntimeComponent({
   program,
   scope,
   stack,
+  setState,
 }: RuntimeComponentProps) {
   const NativeComponent =
     componentRegistry.get(component.name);
@@ -270,12 +302,15 @@ function RuntimeComponent({
   const invocationValues = evaluateArguments(
     component,
     scope,
+    setState,
   );
 
   if (NativeComponent) {
     return (
       <NativeComponent
-        {...(invocationValues as PaixRuntimeProps)}
+        {...(
+          invocationValues as PaixRuntimeProps
+        )}
       />
     );
   }
@@ -305,7 +340,10 @@ function RuntimeComponent({
       definition={definition}
       suppliedValues={invocationValues}
       program={program}
-      stack={[...stack, component.name]}
+      stack={[
+        ...stack,
+        component.name,
+      ]}
     />
   );
 }
@@ -323,77 +361,148 @@ function UserDefinedComponent({
   program,
   stack,
 }: UserDefinedComponentProps) {
-  const localScope: PaixScope = {};
-
-  for (const parameter of definition.parameters) {
-    localScope[parameter.name] = Object.hasOwn(
+  const resolvedInputs =
+    resolveComponentInputs(
+      definition,
       suppliedValues,
-      parameter.name,
-    )
-      ? suppliedValues[parameter.name]
-      : evaluateExpression(
-          parameter.defaultValue,
-          localScope,
-        );
-  }
+    );
 
-  for (const state of definition.states) {
-    localScope[state.name] = Object.hasOwn(
-      suppliedValues,
-      state.name,
-    )
-      ? suppliedValues[state.name]
-      : evaluateExpression(
-          state.initialValue,
-          localScope,
-        );
+  const initialScope: PaixScope = {
+    ...resolvedInputs,
+
+    [PAIX_INPUTS_SCOPE_KEY]:
+      resolvedInputs,
+  };
+
+  const {
+    values: stateValues,
+    setValue: setState,
+  } = usePaixState(
+    definition.states,
+    initialScope,
+  );
+
+  const localScope: PaixScope = {
+    ...resolvedInputs,
+    ...stateValues,
+
+    [PAIX_INPUTS_SCOPE_KEY]:
+      resolvedInputs,
+  };
+
+  const wireframe =
+    program.wireframes[
+      definition.wireframe
+    ];
+
+  if (!wireframe) {
+    return (
+      <div className="paix-runtime-error">
+        Component {definition.name} requires
+        unknown wireframe{" "}
+        {definition.wireframe}.
+      </div>
+    );
   }
 
   return (
     <div
       className="paix-user-component"
-      data-paix-component={definition.name}
-      data-paix-wireframe={definition.wireframe}
+      data-paix-component={
+        definition.name
+      }
+      data-paix-wireframe={
+        definition.wireframe
+      }
     >
-      {definition.placements.map(
-        (placement, index) => {
-          const areaName = getTargetAreaName(
-            placement.target,
-          );
-
-          return (
-            <div
-              className={`paix-component-area paix-component-area-${normalizeAreaName(
-                areaName,
-              )}`}
-              data-paix-area={
-                placement.target.path
-              }
-              key={`${placement.target.path}-${index}`}
-            >
-              <PlacementContent
-                placement={placement}
-                program={program}
-                scope={localScope}
-                stack={stack}
-              />
-            </div>
-          );
-        },
-      )}
+      <ScopedWireframe
+        wireframe={wireframe}
+        placements={
+          definition.placements
+        }
+        program={program}
+        scope={localScope}
+        stack={stack}
+        setState={setState}
+      />
     </div>
   );
+}
+
+function resolveComponentInputs(
+  definition: PaixComponentDefinitionNode,
+  suppliedValues: PaixScope,
+): PaixScope {
+  const resolvedInputs: PaixScope = {
+    ...suppliedValues,
+  };
+
+  const inputScope: PaixScope = {
+    ...resolvedInputs,
+
+    [PAIX_INPUTS_SCOPE_KEY]:
+      resolvedInputs,
+  };
+
+  // Compatibilidad temporal con
+  // el antiguo bloque parameters:
+  for (
+    const parameter of
+    definition.parameters
+  ) {
+    if (
+      !Object.hasOwn(
+        resolvedInputs,
+        parameter.name,
+      )
+    ) {
+      resolvedInputs[parameter.name] =
+        evaluateExpression(
+          parameter.defaultValue,
+          inputScope,
+        );
+    }
+
+    inputScope[parameter.name] =
+      resolvedInputs[parameter.name];
+  }
+
+  return resolvedInputs;
 }
 
 function evaluateArguments(
   component: PaixComponentNode,
   scope: PaixScope,
+  setState?: PaixStateSetter,
 ): PaixScope {
   return Object.fromEntries(
-    component.arguments.map((argument) => [
-      argument.name,
-      evaluateExpression(argument.value, scope),
-    ]),
+    component.arguments.map((argument) => {
+      if (
+        isPaixEventArgument(
+          argument.name,
+        )
+      ) {
+        return [
+          argument.name,
+
+          resolvePaixEvent(
+            argument.value,
+            {
+              scope,
+              setState,
+            },
+          ),
+        ];
+      }
+
+      return [
+        argument.name,
+        evaluateExpression(
+          argument.value,
+          scope,
+        ),
+      ];
+    }),
   );
 }
 

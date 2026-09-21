@@ -861,14 +861,13 @@ b.js-type-text {
 }
 
 .paix-user-component {
-  display: flex;
+  display: block;
   width: 100%;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
-
 .paix-component-area {
   display: flex;
   min-width: 0;

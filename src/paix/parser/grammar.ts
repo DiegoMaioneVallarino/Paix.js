@@ -39,6 +39,8 @@ IslandKeyword,
 LayerKeyword,
 GridSizeLiteral,
 SizeLiteral,
+ThisKeyword,
+OtherwiseKeyword
 } from "../lexer/tokens";
 
 export class PaixParser extends CstParser {
@@ -108,7 +110,17 @@ private parameterSection = this.RULE(
     });
   },
 );
+private inputReference = this.RULE(
+  "inputReference",
+  () => {
+    this.CONSUME(ThisKeyword);
+    this.CONSUME(Dot);
 
+    this.CONSUME(Identifier, {
+      LABEL: "inputName",
+    });
+  },
+);
 private parameterDeclaration = this.RULE(
   "parameterDeclaration",
   () => {
@@ -337,69 +349,82 @@ private stack = this.RULE("stack", () => {
   });
 
   private expression = this.RULE(
-    "expression",
-    () => {
-      this.SUBRULE(this.primary, {
+  "expression",
+  () => {
+    this.SUBRULE(this.primary, {
+      LABEL: "operand",
+    });
+
+    this.MANY(() => {
+      this.OR([
+        {
+          ALT: () =>
+            this.CONSUME(Plus, {
+              LABEL: "operator",
+            }),
+        },
+        {
+          ALT: () =>
+            this.CONSUME(Minus, {
+              LABEL: "operator",
+            }),
+        },
+      ]);
+
+      this.SUBRULE2(this.primary, {
         LABEL: "operand",
       });
+    });
 
-      this.MANY(() => {
-        this.OR([
-          {
-            ALT: () =>
-              this.CONSUME(Plus, {
-                LABEL: "operator",
-              }),
-          },
-          {
-            ALT: () =>
-              this.CONSUME(Minus, {
-                LABEL: "operator",
-              }),
-          },
-        ]);
+    this.OPTION(() => {
+      this.CONSUME(OtherwiseKeyword);
 
-        this.SUBRULE2(this.primary, {
-          LABEL: "operand",
-        });
+      this.SUBRULE(this.expression, {
+        LABEL: "fallback",
       });
+    });
+  },
+);
+
+
+private primary = this.RULE("primary", () => {
+  this.OR([
+    {
+      ALT: () =>
+        this.SUBRULE(this.inputReference),
     },
-  );
+    {
+      GATE: () =>
+        (this.LA(1).tokenType === Identifier ||
+          this.LA(1).tokenType ===
+            SetterIdentifier) &&
+        this.LA(2).tokenType === LeftParenthesis,
 
-  private primary = this.RULE("primary", () => {
-    this.OR([
-      {
-        GATE: () =>
-          (this.LA(1).tokenType === Identifier ||
-            this.LA(1).tokenType ===
-              SetterIdentifier) &&
-          this.LA(2).tokenType === LeftParenthesis,
-
-        ALT: () => this.SUBRULE(this.functionCall),
-      },
-      {
-        ALT: () => this.CONSUME(StringLiteral),
-      },
-      {
-        ALT: () => this.CONSUME(NumberLiteral),
-      },
-      {
-        ALT: () => this.CONSUME(TrueKeyword),
-      },
-      {
-        ALT: () => this.CONSUME(FalseKeyword),
-      },
-      {
-        ALT: () => this.CONSUME(NoneKeyword),
-      },
-      {
-        ALT: () => this.CONSUME(StateIdentifier),
-      },
-      {
-        ALT: () => this.CONSUME(Identifier),
-      },
-    ]);
-  });
+      ALT: () => this.SUBRULE(this.functionCall),
+    },
+    {
+      ALT: () => this.CONSUME(StringLiteral),
+    },
+    {
+      ALT: () => this.CONSUME(NumberLiteral),
+    },
+    {
+      ALT: () => this.CONSUME(TrueKeyword),
+    },
+    {
+      ALT: () => this.CONSUME(FalseKeyword),
+    },
+    {
+      ALT: () => this.CONSUME(NoneKeyword),
+    },
+    {
+      ALT: () => this.CONSUME(StateIdentifier),
+    },
+    {
+      ALT: () => this.CONSUME(Identifier),
+    },
+  ]);
+});
 
   private functionCall = this.RULE(
     "functionCall",

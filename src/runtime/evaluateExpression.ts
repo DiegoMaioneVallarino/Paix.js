@@ -1,6 +1,11 @@
-import type { PaixExpressionNode } from "../paix/ast/ast.types";
+import type {
+  PaixExpressionNode,
+} from "../paix/ast/ast.types";
 
 export type PaixScope = Record<string, unknown>;
+
+export const PAIX_INPUTS_SCOPE_KEY =
+  "__paixInputs";
 
 export function evaluateExpression(
   expression: PaixExpressionNode,
@@ -17,6 +22,36 @@ export function evaluateExpression(
     case "Reference":
       return scope[expression.name];
 
+    case "InputReference": {
+      const inputs =
+        scope[PAIX_INPUTS_SCOPE_KEY];
+
+      if (
+        !inputs ||
+        typeof inputs !== "object"
+      ) {
+        return undefined;
+      }
+
+      return (
+        inputs as Record<string, unknown>
+      )[expression.name];
+    }
+
+    case "OtherwiseExpression": {
+      const value = evaluateExpression(
+        expression.value,
+        scope,
+      );
+
+      return value === undefined
+        ? evaluateExpression(
+            expression.fallback,
+            scope,
+          )
+        : value;
+    }
+
     case "BinaryExpression": {
       const left = evaluateExpression(
         expression.left,
@@ -27,6 +62,13 @@ export function evaluateExpression(
         expression.right,
         scope,
       );
+
+      if (
+        left === undefined ||
+        right === undefined
+      ) {
+        return undefined;
+      }
 
       if (expression.operator === "+") {
         if (

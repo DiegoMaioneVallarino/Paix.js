@@ -22,6 +22,8 @@ PaixStackNode,
 PaixSizeNode,
 PaixSliceNode,
 PaixWireframeNode,
+PaixInputReferenceNode,
+PaixOtherwiseExpressionNode
 } from "./ast.types";
 
 type CstChildren = CstNode["children"];
@@ -53,7 +55,17 @@ class PaixAstVisitor extends BasePaixVisitor {
       ),
     };
   }
+public inputReference(
+  ctx: CstChildren,
+): PaixInputReferenceNode {
+  const inputName =
+    ctx.inputName?.[0] as IToken;
 
+  return {
+    type: "InputReference",
+    name: inputName.image,
+  };
+}
 public wireframe(
   ctx: CstChildren,
 ): PaixWireframeNode {
@@ -405,49 +417,74 @@ public stack(ctx: CstChildren): PaixStackNode {
     };
   }
 
-  public expression(
-    ctx: CstChildren,
-  ): PaixExpressionNode {
-    const operands =
-      (ctx.operand ?? []) as CstNode[];
+ public expression(
+  ctx: CstChildren,
+): PaixExpressionNode {
+  const operands =
+    (ctx.operand ?? []) as CstNode[];
 
-    const operators =
-      (ctx.operator ?? []) as IToken[];
+  const operators =
+    (ctx.operator ?? []) as IToken[];
 
-    let result = this.visit(
-      operands[0],
+  let result = this.visit(
+    operands[0],
+  ) as PaixExpressionNode;
+
+  for (
+    let index = 0;
+    index < operators.length;
+    index += 1
+  ) {
+    const operator = operators[index].image as
+      | "+"
+      | "-";
+
+    const right = this.visit(
+      operands[index + 1],
     ) as PaixExpressionNode;
 
-    for (
-      let index = 0;
-      index < operators.length;
-      index += 1
-    ) {
-      const operator = operators[index].image as
-        | "+"
-        | "-";
+    const binaryExpression: PaixBinaryExpressionNode = {
+      type: "BinaryExpression",
+      operator,
+      left: result,
+      right,
+    };
 
-      const right = this.visit(
-        operands[index + 1],
-      ) as PaixExpressionNode;
+    result = binaryExpression;
+  }
 
-      const binaryExpression: PaixBinaryExpressionNode = {
-        type: "BinaryExpression",
-        operator,
-        left: result,
-        right,
+  const fallbackNode =
+    ctx.fallback?.[0] as CstNode | undefined;
+
+  if (fallbackNode) {
+    const otherwiseExpression:
+      PaixOtherwiseExpressionNode = {
+        type: "OtherwiseExpression",
+        value: result,
+        fallback: this.visit(
+          fallbackNode,
+        ) as PaixExpressionNode,
       };
 
-      result = binaryExpression;
-    }
-
-    return result;
+    return otherwiseExpression;
   }
+
+  return result;
+}
+
+
+
 
   public primary(
     ctx: CstChildren,
   ): PaixExpressionNode {
-    if (ctx.functionCall) {
+
+
+if (ctx.inputReference) {
+  return this.visit(
+    ctx.inputReference[0] as CstNode,
+  );
+}    if (ctx.functionCall) {
       return this.visit(
         ctx.functionCall[0] as CstNode,
       );

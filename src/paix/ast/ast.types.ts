@@ -10,6 +10,11 @@ export interface PaixReferenceNode {
   kind: "state" | "value";
 }
 
+export interface PaixInputReferenceNode {
+  type: "InputReference";
+  name: string;
+}
+
 export interface PaixCallExpressionNode {
   type: "CallExpression";
   callee: string;
@@ -23,17 +28,20 @@ export interface PaixBinaryExpressionNode {
   right: PaixExpressionNode;
 }
 
+export interface PaixOtherwiseExpressionNode {
+  type: "OtherwiseExpression";
+  value: PaixExpressionNode;
+  fallback: PaixExpressionNode;
+}
+
 export type PaixExpressionNode =
   | PaixPrimitive
   | PaixReferenceNode
+  | PaixInputReferenceNode
   | PaixCallExpressionNode
-  | PaixBinaryExpressionNode;
+  | PaixBinaryExpressionNode
+  | PaixOtherwiseExpressionNode;
 
-export type PaixDocumentNode =
-  | PaixPageNode
-  | PaixComponentDefinitionNode
-  | PaixWireframeNode;
-  
 export interface PaixArgumentNode {
   type: "Argument";
   name: string;
@@ -45,30 +53,6 @@ export interface PaixComponentNode {
   type: "Component";
   name: string;
   arguments: PaixArgumentNode[];
-}
-
-export interface PaixAreaReferenceNode {
-  type: "AreaReference";
-  path: string;
-  segments: string[];
-  slots: boolean;
-}
-
-export interface PaixStackNode {
-  type: "Stack";
-  items: PaixComponentNode[];
-}
-
-export interface PaixSinglePlacementNode {
-  type: "Placement";
-  target: PaixAreaReferenceNode;
-  component: PaixComponentNode;
-}
-
-export interface PaixStackPlacementNode {
-  type: "StackPlacement";
-  target: PaixAreaReferenceNode;
-  stack: PaixStackNode;
 }
 
 export interface PaixAreaReferenceNode {
@@ -173,3 +157,8 @@ export interface PaixWireframeNode {
   name: string;
   slices: PaixSliceNode[];
 }
+
+export type PaixDocumentNode =
+  | PaixPageNode
+  | PaixComponentDefinitionNode
+  | PaixWireframeNode;

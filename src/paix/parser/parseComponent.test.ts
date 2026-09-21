@@ -103,4 +103,95 @@ logoArea >
       },
     ]);
   });
+
+  test("infers component inputs from this references", () => {
+  const source = `component "Header" HeaderFrame
+
+logoArea >
+    Text(value: this.title)
+
+accountArea >
+    Button(label: this.accountLabel)`;
+
+  const result = parsePaixComponent(source);
+
+  expect(result.diagnostics).toEqual([]);
+  expect(result.ast).not.toBeNull();
+
+  const firstPlacement =
+    result.ast?.placements[0];
+
+  if (
+    !firstPlacement ||
+    firstPlacement.type !== "Placement"
+  ) {
+    throw new Error(
+      "Expected a single component placement.",
+    );
+  }
+
+  expect(
+    firstPlacement.component.arguments[0]
+      ?.value,
+  ).toEqual({
+    type: "InputReference",
+    name: "title",
+  });
+
+  const secondPlacement =
+    result.ast?.placements[1];
+
+  if (
+    !secondPlacement ||
+    secondPlacement.type !== "Placement"
+  ) {
+    throw new Error(
+      "Expected a single component placement.",
+    );
+  }
+
+  expect(
+    secondPlacement.component.arguments[0]
+      ?.value,
+  ).toEqual({
+    type: "InputReference",
+    name: "accountLabel",
+  });
+});
+
+
+test("parses an input fallback with otherwise", () => {
+  const source = `component "SelectableButton" ButtonFrame
+
+state:
+    _selected: this.selected otherwise false
+
+mainArea >
+    Button(
+        label: "Select",
+        onClick: set_selected(true)
+    )`;
+
+  const result = parsePaixComponent(source);
+
+  expect(result.diagnostics).toEqual([]);
+
+  expect(result.ast?.states).toEqual([
+    {
+      type: "State",
+      name: "_selected",
+
+      initialValue: {
+        type: "OtherwiseExpression",
+
+        value: {
+          type: "InputReference",
+          name: "selected",
+        },
+
+        fallback: false,
+      },
+    },
+  ]);
+});
 });

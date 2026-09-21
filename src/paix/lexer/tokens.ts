@@ -54,6 +54,11 @@ export const NumberLiteral = createToken({
   pattern: /\d+(?:\.\d+)?/,
 });
 
+export const OtherwiseKeyword = createToken({
+  name: "OtherwiseKeyword",
+  pattern: /otherwise\b/,
+});
+
 export const StateIdentifier = createToken({
   name: "StateIdentifier",
   pattern: /_[a-zA-Z][a-zA-Z0-9_]*/,
@@ -181,6 +186,11 @@ export const RightBracket = createToken({
   pattern: /\]/,
 });
 
+export const ThisKeyword = createToken({
+  name: "ThisKeyword",
+  pattern: /this\b/,
+});
+
 export const allTokens: TokenType[] = [
   WhiteSpace,
   Comment,
@@ -190,6 +200,8 @@ export const allTokens: TokenType[] = [
   ParametersKeyword,
   StateKeyword,
   PageKeyword,
+  ThisKeyword,
+  OtherwiseKeyword,
 
   SliceKeyword,
   VerticalKeyword,
@@ -206,7 +218,6 @@ export const allTokens: TokenType[] = [
   NoneKeyword,
 
   StringLiteral,
-
   GridSizeLiteral,
   SizeLiteral,
   NumberLiteral,
