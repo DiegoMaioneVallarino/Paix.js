@@ -4,6 +4,7 @@ import type {
   PaixComponentDefinitionNode,
   PaixComponentNode,
   PaixPlacementNode,
+  PaixWireframeNode,
 } from "../paix/ast/ast.types";
 
 import type { PaixCompiledProject } from "../paix/compiler/compiled.types";
@@ -43,80 +44,18 @@ export function PaixRenderer({
     program.wireframes[page.wireframe];
 
   if (wireframe) {
-    const renderArea = (
-      areaName: string,
-    ) => {
-      const placements =
-        page.placements.filter(
-          (placement) =>
-            !placement.target.slots &&
-            getTargetAreaName(
-              placement.target,
-            ) === areaName,
-        );
-
-      return placements.map(
-        (placement, index) => (
-          <PlacementContent
-            key={`${placement.target.path}-${index}`}
-            placement={placement}
-            program={program}
-            scope={{}}
-            stack={[]}
-          />
-        ),
-      );
-    };
-
-    const renderSlot = (
-      areaName: string,
-      slotIndex: number,
-    ) => {
-      const placement =
-        page.placements.find(
-          (candidate) =>
-            candidate.type ===
-              "StackPlacement" &&
-            candidate.target.slots &&
-            getTargetAreaName(
-              candidate.target,
-            ) === areaName,
-        );
-
-      if (
-        !placement ||
-        placement.type !== "StackPlacement"
-      ) {
-        return null;
-      }
-
-      const component =
-        placement.stack.items[slotIndex];
-
-      if (!component) {
-        return null;
-      }
-
-      return (
-        <RuntimeComponent
-          component={component}
-          program={program}
-          scope={{}}
-          stack={[]}
-        />
-      );
-    };
-
-    return (
-      <div className="paix-page">
-        <WireframeRenderer
-          wireframe={wireframe}
-          renderArea={renderArea}
-          renderSlot={renderSlot}
-        />
-      </div>
-    );
-  }
+  return (
+    <div className="paix-page">
+      <ScopedWireframe
+        wireframe={wireframe}
+        placements={page.placements}
+        program={program}
+        scope={{}}
+        stack={[]}
+      />
+    </div>
+  );
+}
 
   // Fallback temporal si no se encuentra el wireframe.
   return (
@@ -170,7 +109,91 @@ interface PlacementContentProps {
   scope: PaixScope;
   stack: string[];
 }
+interface ScopedWireframeProps {
+  wireframe: PaixWireframeNode;
+  placements: PaixPlacementNode[];
+  program: PaixCompiledProject;
+  scope: PaixScope;
+  stack: string[];
+}
 
+function ScopedWireframe({
+  wireframe,
+  placements,
+  program,
+  scope,
+  stack,
+}: ScopedWireframeProps) {
+  const renderArea = (
+    areaName: string,
+  ) => {
+    const areaPlacements = placements.filter(
+      (placement) =>
+        !placement.target.slots &&
+        getTargetAreaName(
+          placement.target,
+        ) === areaName,
+    );
+
+    return areaPlacements.map(
+      (placement, index) => (
+        <PlacementContent
+          key={`${placement.target.path}-${index}`}
+          placement={placement}
+          program={program}
+          scope={scope}
+          stack={stack}
+        />
+      ),
+    );
+  };
+
+  const renderSlot = (
+    areaName: string,
+    slotIndex: number,
+  ) => {
+    const placement = placements.find(
+      (candidate) =>
+        candidate.type ===
+          "StackPlacement" &&
+        candidate.target.slots &&
+        getTargetAreaName(
+          candidate.target,
+        ) === areaName,
+    );
+
+    if (
+      !placement ||
+      placement.type !== "StackPlacement"
+    ) {
+      return null;
+    }
+
+    const component =
+      placement.stack.items[slotIndex];
+
+    if (!component) {
+      return null;
+    }
+
+    return (
+      <RuntimeComponent
+        component={component}
+        program={program}
+        scope={scope}
+        stack={stack}
+      />
+    );
+  };
+
+  return (
+    <WireframeRenderer
+      wireframe={wireframe}
+      renderArea={renderArea}
+      renderSlot={renderSlot}
+    />
+  );
+}
 function PlacementContent({
   placement,
   program,
