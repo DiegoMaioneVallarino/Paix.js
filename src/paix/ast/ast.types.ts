@@ -29,6 +29,11 @@ export type PaixExpressionNode =
   | PaixCallExpressionNode
   | PaixBinaryExpressionNode;
 
+export type PaixDocumentNode =
+  | PaixPageNode
+  | PaixComponentDefinitionNode
+  | PaixWireframeNode;
+  
 export interface PaixArgumentNode {
   type: "Argument";
   name: string;
@@ -122,3 +127,49 @@ export interface PaixComponentDefinitionNode {
   placements: PaixPlacementNode[];
 }
 
+export interface PaixSizeNode {
+  value: number;
+  unit: "px" | "percent";
+}
+
+interface PaixSliceBaseNode {
+  type: "Slice";
+  target: PaixAreaReferenceNode;
+  areas: string[];
+}
+
+export interface PaixSizedSliceNode
+  extends PaixSliceBaseNode {
+  mode:
+    | "vertical"
+    | "horizontal"
+    | "vertical-centered"
+    | "horizontal-centered"
+    | "island";
+
+  size: PaixSizeNode;
+}
+
+export interface PaixRepeatedSliceNode
+  extends PaixSliceBaseNode {
+  mode: "columns" | "rows" | "layer";
+  count: number;
+}
+
+export interface PaixGridSliceNode
+  extends PaixSliceBaseNode {
+  mode: "grid";
+  columns: number;
+  rows: number;
+}
+
+export type PaixSliceNode =
+  | PaixSizedSliceNode
+  | PaixRepeatedSliceNode
+  | PaixGridSliceNode;
+
+export interface PaixWireframeNode {
+  type: "Wireframe";
+  name: string;
+  slices: PaixSliceNode[];
+}

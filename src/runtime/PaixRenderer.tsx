@@ -19,7 +19,7 @@ import {
   evaluateExpression,
   type PaixScope,
 } from "./evaluateExpression";
-
+import { WireframeRenderer } from "./WireframeRenderer";
 registerStandardLibrary();
 
 interface PaixRendererProps {
@@ -37,9 +37,91 @@ export function PaixRenderer({
     );
   }
 
+  const page = program.entryPage;
+
+  const wireframe =
+    program.wireframes[page.wireframe];
+
+  if (wireframe) {
+    const renderArea = (
+      areaName: string,
+    ) => {
+      const placements =
+        page.placements.filter(
+          (placement) =>
+            !placement.target.slots &&
+            getTargetAreaName(
+              placement.target,
+            ) === areaName,
+        );
+
+      return placements.map(
+        (placement, index) => (
+          <PlacementContent
+            key={`${placement.target.path}-${index}`}
+            placement={placement}
+            program={program}
+            scope={{}}
+            stack={[]}
+          />
+        ),
+      );
+    };
+
+    const renderSlot = (
+      areaName: string,
+      slotIndex: number,
+    ) => {
+      const placement =
+        page.placements.find(
+          (candidate) =>
+            candidate.type ===
+              "StackPlacement" &&
+            candidate.target.slots &&
+            getTargetAreaName(
+              candidate.target,
+            ) === areaName,
+        );
+
+      if (
+        !placement ||
+        placement.type !== "StackPlacement"
+      ) {
+        return null;
+      }
+
+      const component =
+        placement.stack.items[slotIndex];
+
+      if (!component) {
+        return null;
+      }
+
+      return (
+        <RuntimeComponent
+          component={component}
+          program={program}
+          scope={{}}
+          stack={[]}
+        />
+      );
+    };
+
+    return (
+      <div className="paix-page">
+        <WireframeRenderer
+          wireframe={wireframe}
+          renderArea={renderArea}
+          renderSlot={renderSlot}
+        />
+      </div>
+    );
+  }
+
+  // Fallback temporal si no se encuentra el wireframe.
   return (
     <div className="paix-page">
-      {program.entryPage.placements.map(
+      {page.placements.map(
         (placement, index) => (
           <PagePlacement
             key={`${placement.target.path}-${index}`}

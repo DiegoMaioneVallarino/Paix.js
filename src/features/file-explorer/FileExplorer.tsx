@@ -1,6 +1,8 @@
 import { useMemo } from "react";
+
 import { useProjectStore } from "../../project/project.store";
 import type { PaixFile } from "../../project/project.types";
+
 import { FileTreeItem } from "./FileTreeItem";
 
 const folderOrder = [
@@ -12,12 +14,26 @@ const folderOrder = [
 ];
 
 export function FileExplorer() {
-  const project = useProjectStore((state) => state.project);
+  const project = useProjectStore(
+    (state) => state.project,
+  );
+
   const activeFilePath = useProjectStore(
     (state) => state.activeFilePath,
   );
-  const openFolders = useProjectStore((state) => state.openFolders);
-  const openFile = useProjectStore((state) => state.openFile);
+
+  const openFolders = useProjectStore(
+    (state) => state.openFolders,
+  );
+
+  const modifiedFiles = useProjectStore(
+    (state) => state.modifiedFiles,
+  );
+
+  const openFile = useProjectStore(
+    (state) => state.openFile,
+  );
+
   const toggleFolder = useProjectStore(
     (state) => state.toggleFolder,
   );
@@ -26,7 +42,8 @@ export function FileExplorer() {
     const groups: Record<string, PaixFile[]> = {};
 
     for (const file of Object.values(project.files)) {
-      const folder = file.path.split("/")[0] ?? "other";
+      const folder =
+        file.path.split("/")[0] ?? "other";
 
       if (!groups[folder]) {
         groups[folder] = [];
@@ -37,25 +54,36 @@ export function FileExplorer() {
 
     for (const files of Object.values(groups)) {
       files.sort((firstFile, secondFile) =>
-        firstFile.name.localeCompare(secondFile.name),
+        firstFile.name.localeCompare(
+          secondFile.name,
+        ),
       );
     }
 
     return groups;
   }, [project.files]);
 
-  const folders = Object.keys(groupedFiles).sort((first, second) => {
-    const firstIndex = folderOrder.indexOf(first);
-    const secondIndex = folderOrder.indexOf(second);
+  const folders = Object.keys(groupedFiles).sort(
+    (first, second) => {
+      const firstIndex =
+        folderOrder.indexOf(first);
 
-    const normalizedFirst =
-      firstIndex === -1 ? Number.MAX_SAFE_INTEGER : firstIndex;
+      const secondIndex =
+        folderOrder.indexOf(second);
 
-    const normalizedSecond =
-      secondIndex === -1 ? Number.MAX_SAFE_INTEGER : secondIndex;
+      const normalizedFirst =
+        firstIndex === -1
+          ? Number.MAX_SAFE_INTEGER
+          : firstIndex;
 
-    return normalizedFirst - normalizedSecond;
-  });
+      const normalizedSecond =
+        secondIndex === -1
+          ? Number.MAX_SAFE_INTEGER
+          : secondIndex;
+
+      return normalizedFirst - normalizedSecond;
+    },
+  );
 
   return (
     <aside className="file-panel panel">
@@ -80,16 +108,20 @@ export function FileExplorer() {
         </div>
 
         {folders.map((folder) => {
-          const isOpen = openFolders.includes(folder);
-            const modifiedFiles = useProjectStore(
-            (state) => state.modifiedFiles,
-            );
+          const isOpen =
+            openFolders.includes(folder);
+
           return (
-            <div className="tree-group" key={folder}>
+            <div
+              className="tree-group"
+              key={folder}
+            >
               <button
                 type="button"
                 className="tree-folder"
-                onClick={() => toggleFolder(folder)}
+                onClick={() =>
+                  toggleFolder(folder)
+                }
               >
                 <span className="tree-arrow">
                   {isOpen ? "⌄" : "›"}
@@ -100,15 +132,22 @@ export function FileExplorer() {
               </button>
 
               {isOpen &&
-                groupedFiles[folder].map((file) => (
-                 <FileTreeItem
-                    key={file.id}
-                    file={file}
-                    selected={file.path === activeFilePath}
-                    modified={modifiedFiles.includes(file.path)}
-                    onOpen={openFile}
-/>
-                ))}
+                groupedFiles[folder].map(
+                  (file) => (
+                    <FileTreeItem
+                      key={file.id}
+                      file={file}
+                      selected={
+                        file.path ===
+                        activeFilePath
+                      }
+                      modified={modifiedFiles.includes(
+                        file.path,
+                      )}
+                      onOpen={openFile}
+                    />
+                  ),
+                )}
             </div>
           );
         })}

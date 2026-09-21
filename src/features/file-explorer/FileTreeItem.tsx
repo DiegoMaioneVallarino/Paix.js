@@ -1,4 +1,8 @@
-import type { PaixFile } from "../../project/project.types";
+import type {
+  PaixFile,
+} from "../../project/project.types";
+
+import { FileTypeIcon } from "./FileTypeIcon";
 
 interface FileTreeItemProps {
   file: PaixFile;
@@ -16,13 +20,17 @@ export function FileTreeItem({
   return (
     <button
       type="button"
-      className={`tree-file ${selected ? "selected" : ""}`}
+      className={`tree-file ${
+        selected ? "selected" : ""
+      }`}
       title={file.path}
       onClick={() => onOpen(file.path)}
     >
-      <span className="paix-file-icon">P</span>
+      <FileTypeIcon type={file.type} />
 
-      <span className="tree-file-name">{file.name}</span>
+      <span className="tree-file-name">
+        {file.name}
+      </span>
 
       {modified && (
         <span

@@ -19,6 +19,9 @@ PaixParameterNode,
 PaixStateNode,
 PaixAreaReferenceNode,
 PaixStackNode,
+PaixSizeNode,
+PaixSliceNode,
+PaixWireframeNode,
 } from "./ast.types";
 
 type CstChildren = CstNode["children"];
@@ -50,6 +53,159 @@ class PaixAstVisitor extends BasePaixVisitor {
       ),
     };
   }
+
+public wireframe(
+  ctx: CstChildren,
+): PaixWireframeNode {
+  const nameToken =
+    ctx.StringLiteral?.[0] as IToken;
+
+  const sliceNodes =
+    (ctx.sliceDeclaration ?? []) as CstNode[];
+
+  return {
+    type: "Wireframe",
+    name: parseString(nameToken.image),
+
+    slices: sliceNodes.map(
+      (node) => this.visit(node) as PaixSliceNode,
+    ),
+  };
+}
+
+public sliceDeclaration(
+  ctx: CstChildren,
+): PaixSliceNode {
+  const targetNode =
+    ctx.target?.[0] as CstNode;
+
+  const target = this.visit(
+    targetNode,
+  ) as PaixAreaReferenceNode;
+
+  const areas = (
+    (ctx.areaName ?? []) as IToken[]
+  ).map((token) => parseString(token.image));
+
+  if (ctx.VerticalKeyword) {
+    return {
+      type: "Slice",
+      target,
+
+      mode: ctx.CenteredKeyword
+        ? "vertical-centered"
+        : "vertical",
+
+      size: this.visit(
+        ctx.sizeValue?.[0] as CstNode,
+      ) as PaixSizeNode,
+
+      areas,
+    };
+  }
+
+  if (ctx.HorizontalKeyword) {
+    return {
+      type: "Slice",
+      target,
+
+      mode: ctx.CenteredKeyword
+        ? "horizontal-centered"
+        : "horizontal",
+
+      size: this.visit(
+        ctx.sizeValue?.[0] as CstNode,
+      ) as PaixSizeNode,
+
+      areas,
+    };
+  }
+
+  if (ctx.ColumnsKeyword || ctx.RowsKeyword) {
+    const countToken =
+      ctx.count?.[0] as IToken;
+
+    return {
+      type: "Slice",
+      target,
+
+      mode: ctx.ColumnsKeyword
+        ? "columns"
+        : "rows",
+
+      count: Number(countToken.image),
+      areas,
+    };
+  }
+
+  if (ctx.GridKeyword) {
+    const gridToken =
+      ctx.GridSizeLiteral?.[0] as IToken;
+
+    const [columns, rows] = gridToken.image
+      .split("x")
+      .map(Number);
+
+    return {
+      type: "Slice",
+      target,
+      mode: "grid",
+      columns,
+      rows,
+      areas,
+    };
+  }
+
+  if (ctx.IslandKeyword) {
+    return {
+      type: "Slice",
+      target,
+      mode: "island",
+
+      size: this.visit(
+        ctx.sizeValue?.[0] as CstNode,
+      ) as PaixSizeNode,
+
+      areas,
+    };
+  }
+
+  const countToken =
+    ctx.count?.[0] as IToken;
+
+  return {
+    type: "Slice",
+    target,
+    mode: "layer",
+    count: Number(countToken.image),
+    areas,
+  };
+}
+
+public sizeValue(
+  ctx: CstChildren,
+): PaixSizeNode {
+  const token = (
+    ctx.SizeLiteral?.[0] ??
+    ctx.NumberLiteral?.[0]
+  ) as IToken;
+
+  if (token.image.endsWith("%")) {
+    return {
+      value: Number(token.image.slice(0, -1)),
+      unit: "percent",
+    };
+  }
+
+  const numericValue = token.image.endsWith("px")
+    ? token.image.slice(0, -2)
+    : token.image;
+
+  return {
+    value: Number(numericValue),
+    unit: "px",
+  };
+}
 
 public component(
   ctx: CstChildren,

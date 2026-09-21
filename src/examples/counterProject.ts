@@ -5,19 +5,56 @@ export const counterProject: PaixProject = {
   name: "counter-app",
   entry: "pages/home.paix",
 
-  files: {
+  files: {"wireframes/WireframeLab.paix": {
+  id: "wireframe-lab",
+  name: "WireframeLab.paix",
+  path: "wireframes/WireframeLab.paix",
+  type: "wireframe",
+
+  content: `wireframe "WireframeLab"
+
+main slice grid 2x2 >
+    "gridArea"
+    "islandArea"
+    "verticalCenteredArea"
+    "horizontalCenteredArea"
+
+gridArea slice grid 3x2
+
+islandArea slice island 14 >
+    "islandContentArea"
+
+islandContentArea slice layer 3 >
+    "bottomLayer"
+    "middleLayer"
+    "topLayer"
+
+verticalCenteredArea slice vertical centered 90 >
+    "leftArea"
+    "verticalCenterArea"
+    "rightArea"
+
+horizontalCenteredArea slice horizontal centered 54 >
+    "topArea"
+    "horizontalCenterArea"
+    "bottomArea"`,
+},
     "pages/home.paix": {
       id: "home-page",
       name: "home.paix",
       path: "pages/home.paix",
       type: "page",
+
       content: `page "home" MainFrame
 
-header >
+headerArea >
     Text(value: "Hello Paix")
 
-content >
-    Button(label: "Continue")`,
+contentArea.slots > [
+    Button(label: "Home"),
+    Button(label: "Catalogue"),
+    Button(label: "Contact")
+]`,
     },
 
     "components/Counter.paix": {
@@ -25,6 +62,7 @@ content >
       name: "Counter.paix",
       path: "components/Counter.paix",
       type: "component",
+
       content: `component "Counter" CounterFrame
 
 state:
@@ -39,6 +77,7 @@ actionsArea >
         onClick: set_count(_count + 1)
     )
 
+actionsArea >
     Button(
         label: "Reset",
         onClick: set_count(0)
@@ -50,6 +89,7 @@ actionsArea >
       name: "Header.paix",
       path: "components/Header.paix",
       type: "component",
+
       content: `component "Header" HeaderFrame
 
 parameters:
@@ -70,17 +110,14 @@ actionsArea >
       name: "MainFrame.paix",
       path: "wireframes/MainFrame.paix",
       type: "wireframe",
+
       content: `wireframe "MainFrame"
 
-main when width greater than height
-    splitRows 15% >
-        "header" &
-        "content"
+main slice horizontal 72 >
+    "headerArea"
+    "contentArea"
 
-main when height greater than width
-    splitRows 12% >
-        "header" &
-        "content"`,
+contentArea slice columns 3`,
     },
 
     "styles/GlassPanel.paix": {
@@ -88,6 +125,7 @@ main when height greater than width
       name: "GlassPanel.paix",
       path: "styles/GlassPanel.paix",
       type: "style",
+
       content: `style "GlassPanel"
 
 surface: glass

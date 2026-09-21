@@ -60,15 +60,16 @@ main.app-shell {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  padding: 0 14px;
+  padding: 0px 10px;
   border-bottom: 1px solid var(--border);
   background: #02080d;
+
 }
 
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .brand-symbol {
@@ -101,7 +102,7 @@ b.ai-brand-text {
     margin-right: -2px;
 }
 .brand strong {
-    font-size: 41px;
+    font-size: 33px;
     font-family: "Paix Logo", sans-serif;
     font-weight: normal;
     color: #9f9f9f;
@@ -111,11 +112,28 @@ b.ai-brand-text {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
+
+
+b.js-type-text {
+    -webkit-text-stroke: .8px #6c6c6c;
+    letter-spacing: -2px;
+    background: linear-gradient(#717171, #000000);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-right: -2px;
+        font-size: 25px;
+}
+
 .brand div span {
   color: var(--text-soft);
   font-size: 12px;
 }
-
+.brand div {
+    display: flex;
+    align-items: baseline;
+    gap: 0px;
+    margin-top: -3px;
+}
 .project-name {
     display: flex;
     align-items: center;
@@ -394,24 +412,39 @@ b.ai-brand-text {
 }
 
 .preview-canvas {
-  display: grid;
-  grid-template-rows: 58px 1fr;
+  display: block;
   width: min(100%, 620px);
   aspect-ratio: 16 / 10;
   overflow: hidden;
-  color: #16171c;
+  color: #10202c;
   background:
     radial-gradient(
       circle at 75% 20%,
-      rgba(188, 224, 255, 0.85),
-      transparent 34%
+      rgba(174, 225, 255, 0.84),
+      transparent 36%
     ),
-    linear-gradient(145deg, #ffffff, #e7e9f0);
+    linear-gradient(145deg, #ffffff, #e5edf3);
   border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 12px;
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 white;
+  transition:
+    width 180ms ease,
+    aspect-ratio 180ms ease;
+}
+
+.preview-canvas.preview-mobile {
+  width: min(100%, 280px);
+  aspect-ratio: 9 / 16;
+}
+
+.preview-canvas > .paix-page,
+.preview-canvas > .paix-wireframe {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
 }
 
 .demo-header {
@@ -589,12 +622,14 @@ b.ai-brand-text {
   flex: 0 0 auto;
   background: var(--accent);
   border-radius: 50%;
-  box-shadow: 0 0 8px rgba(41, 168, 255, 0.55);
 }
 
 .modified-dot {
   margin-left: auto;
   margin-right: 4px;
+        background: #00b4ff;
+
+  
 }
 
 .tab-modified-dot {
@@ -661,40 +696,8 @@ b.ai-brand-text {
   line-height: 1.6;
 }
 
-.preview-canvas {
-  display: block;
-  width: min(100%, 620px);
-  aspect-ratio: 16 / 10;
-  overflow: hidden;
-  color: #10202c;
-  background:
-    radial-gradient(
-      circle at 75% 20%,
-      rgba(174, 225, 255, 0.84),
-      transparent 36%
-    ),
-    linear-gradient(145deg, #ffffff, #e5edf3);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 12px;
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 white;
-  transition:
-    width 180ms ease,
-    aspect-ratio 180ms ease;
-}
 
-.preview-canvas.preview-mobile {
-  width: min(100%, 280px);
-  aspect-ratio: 9 / 16;
-}
 
-.paix-page {
-  display: grid;
-  grid-template-rows: 64px minmax(0, 1fr);
-  width: 100%;
-  height: 100%;
-}
 
 .paix-area {
   display: flex;
@@ -913,4 +916,236 @@ b.ai-brand-text {
 .paix-stack-item > * {
   width: 100%;
   height: 100%;
+}
+
+.paix-wireframe {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Solo se aplica al visualizar un archivo wireframe. */
+.paix-wireframe-debug {
+  color: #dff5ff;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(31, 165, 255, 0.12),
+      transparent 55%
+    ),
+    #07131c;
+}
+
+/* Estructura neutral compartida por debug y runtime. */
+.paix-wireframe-area {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Decoración exclusiva del editor de wireframes. */
+.paix-wireframe-debug .paix-wireframe-area {
+  background: rgba(10, 45, 65, 0.16);
+  border: 1px solid rgba(88, 199, 255, 0.4);
+  box-shadow:
+    inset 0 0 24px rgba(37, 165, 230, 0.035);
+}
+
+.paix-wireframe-debug .paix-wireframe-area:hover {
+  background: rgba(23, 139, 198, 0.13);
+  border-color: rgba(121, 219, 255, 0.78);
+}
+
+.paix-wireframe-debug .paix-wireframe-slot {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(36, 154, 211, 0.08),
+      rgba(8, 29, 42, 0.16)
+    );
+  border-style: dashed;
+}
+
+/* En runtime el wireframe solo aporta geometría. */
+.paix-wireframe-runtime {
+  color: inherit;
+  background: transparent;
+}
+
+.paix-wireframe-runtime .paix-wireframe-area,
+.paix-wireframe-runtime .paix-wireframe-slot {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Contenido colocado dentro de áreas y slots. */
+.paix-wireframe-content {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  align-items: stretch;
+}
+
+.paix-wireframe-content > * {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Etiquetas visibles únicamente cuando debug=true. */
+.paix-wireframe-label {
+  position: absolute;
+  top: 6px;
+  left: 7px;
+  z-index: 1000;
+  padding: 3px 6px;
+  color: #bceaff;
+  font-family:
+    "Cascadia Code",
+    Consolas,
+    monospace;
+  font-size: 8px;
+  line-height: 1;
+  pointer-events: none;
+  background: rgba(3, 20, 30, 0.82);
+  border: 1px solid rgba(94, 205, 255, 0.28);
+  border-radius: 4px;
+  backdrop-filter: blur(8px);
+}
+
+.paix-wireframe-error {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: #ff9d9d;
+  background: rgba(120, 20, 20, 0.14);
+}
+
+.paix-layer-legend {
+  position: absolute;
+  top: 28px;
+  right: 7px;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 3px;
+  pointer-events: none;
+}
+
+.paix-layer-legend span {
+  padding: 3px 6px;
+  color: #bceaff;
+  font-family:
+    "Cascadia Code",
+    Consolas,
+    monospace;
+  font-size: 8px;
+  background: rgba(3, 20, 30, 0.86);
+  border: 1px solid rgba(94, 205, 255, 0.26);
+  border-radius: 4px;
+}
+
+.brand-logo {
+    display: block;
+    width: auto;
+    height: 50px;
+    object-fit: contain;
+}
+
+.paix-file-type-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  object-fit: contain;
+  user-select: none;
+}.paix-file-type-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+}
+
+.tree-file-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.paix-page {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.paix-wireframe-content {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.paix-wireframe-content > * {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+
+.paix-wireframe-content > * {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.preview-canvas > .paix-page,
+.preview-canvas > .paix-wireframe {
+  grid-row: 1 / -1;
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.paix-wireframe-runtime {
+  color: inherit;
+  background: transparent;
+}
+
+.paix-wireframe-runtime .paix-wireframe-area,
+.paix-wireframe-runtime .paix-wireframe-slot {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.paix-wireframe-runtime .paix-wireframe-area:hover,
+.paix-wireframe-runtime .paix-wireframe-slot:hover {
+  background: transparent;
+  border-color: transparent;
 }

@@ -40,7 +40,15 @@ export const StringLiteral = createToken({
   name: "StringLiteral",
   pattern: /"(?:\\.|[^"\\])*"/,
 });
+export const GridSizeLiteral = createToken({
+  name: "GridSizeLiteral",
+  pattern: /\d+x\d+/,
+});
 
+export const SizeLiteral = createToken({
+  name: "SizeLiteral",
+  pattern: /\d+(?:\.\d+)?(?:px|%)/,
+});
 export const NumberLiteral = createToken({
   name: "NumberLiteral",
   pattern: /\d+(?:\.\d+)?/,
@@ -99,7 +107,55 @@ export const ComponentKeyword = createToken({
   name: "ComponentKeyword",
   pattern: /component\b/,
 });
+export const WireframeKeyword = createToken({
+  name: "WireframeKeyword",
+  pattern: /wireframe\b/,
+});
 
+export const SliceKeyword = createToken({
+  name: "SliceKeyword",
+  pattern: /slice\b/,
+});
+
+export const VerticalKeyword = createToken({
+  name: "VerticalKeyword",
+  pattern: /vertical\b/,
+});
+
+export const HorizontalKeyword = createToken({
+  name: "HorizontalKeyword",
+  pattern: /horizontal\b/,
+});
+
+export const ColumnsKeyword = createToken({
+  name: "ColumnsKeyword",
+  pattern: /columns\b/,
+});
+
+export const RowsKeyword = createToken({
+  name: "RowsKeyword",
+  pattern: /rows\b/,
+});
+
+export const GridKeyword = createToken({
+  name: "GridKeyword",
+  pattern: /grid\b/,
+});
+
+export const CenteredKeyword = createToken({
+  name: "CenteredKeyword",
+  pattern: /centered\b/,
+});
+
+export const IslandKeyword = createToken({
+  name: "IslandKeyword",
+  pattern: /island\b/,
+});
+
+export const LayerKeyword = createToken({
+  name: "LayerKeyword",
+  pattern: /layer\b/,
+});
 export const ParametersKeyword = createToken({
   name: "ParametersKeyword",
   pattern: /parameters\b/,
@@ -130,15 +186,29 @@ export const allTokens: TokenType[] = [
   Comment,
 
   ComponentKeyword,
+  WireframeKeyword,
   ParametersKeyword,
   StateKeyword,
   PageKeyword,
+
+  SliceKeyword,
+  VerticalKeyword,
+  HorizontalKeyword,
+  ColumnsKeyword,
+  RowsKeyword,
+  GridKeyword,
+  CenteredKeyword,
+  IslandKeyword,
+  LayerKeyword,
 
   TrueKeyword,
   FalseKeyword,
   NoneKeyword,
 
   StringLiteral,
+
+  GridSizeLiteral,
+  SizeLiteral,
   NumberLiteral,
 
   StateIdentifier,
@@ -159,4 +229,5 @@ export const allTokens: TokenType[] = [
 ];
 
 export const paixLexer = new Lexer(allTokens);
+
 

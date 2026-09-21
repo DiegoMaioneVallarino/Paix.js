@@ -26,7 +26,19 @@ ParametersKeyword,
 StateKeyword,
 Dot,
 LeftBracket,
-RightBracket
+RightBracket,
+WireframeKeyword,
+SliceKeyword,
+VerticalKeyword,
+HorizontalKeyword,
+ColumnsKeyword,
+RowsKeyword,
+GridKeyword,
+CenteredKeyword,
+IslandKeyword,
+LayerKeyword,
+GridSizeLiteral,
+SizeLiteral,
 } from "../lexer/tokens";
 
 export class PaixParser extends CstParser {
@@ -44,6 +56,18 @@ export class PaixParser extends CstParser {
 
     this.CONSUME(EOF);
   });
+
+public wireframe = this.RULE("wireframe", () => {
+  this.CONSUME(WireframeKeyword);
+  this.CONSUME(StringLiteral);
+
+  this.MANY(() => {
+    this.SUBRULE(this.sliceDeclaration);
+  });
+
+  this.CONSUME(EOF);
+});
+
 public component = this.RULE("component", () => {
   this.CONSUME(ComponentKeyword);
   this.CONSUME(StringLiteral);
@@ -127,7 +151,101 @@ private stateDeclaration = this.RULE(
   },
 );
 
+private sliceDeclaration = this.RULE(
+  "sliceDeclaration",
+  () => {
+    this.SUBRULE(this.areaReference, {
+      LABEL: "target",
+    });
 
+    this.CONSUME(SliceKeyword);
+
+    this.OR([
+      {
+        ALT: () => {
+          this.CONSUME(VerticalKeyword);
+
+          this.OPTION(() => {
+            this.CONSUME(CenteredKeyword);
+          });
+
+          this.SUBRULE(this.sizeValue);
+        },
+      },
+      {
+        ALT: () => {
+          this.CONSUME(HorizontalKeyword);
+
+          this.OPTION2(() => {
+            this.CONSUME2(CenteredKeyword);
+          });
+
+          this.SUBRULE2(this.sizeValue);
+        },
+      },
+      {
+        ALT: () => {
+          this.CONSUME(ColumnsKeyword);
+
+          this.CONSUME(NumberLiteral, {
+            LABEL: "count",
+          });
+        },
+      },
+      {
+        ALT: () => {
+          this.CONSUME(RowsKeyword);
+
+          this.CONSUME2(NumberLiteral, {
+            LABEL: "count",
+          });
+        },
+      },
+      {
+        ALT: () => {
+          this.CONSUME(GridKeyword);
+          this.CONSUME(GridSizeLiteral);
+        },
+      },
+      {
+        ALT: () => {
+          this.CONSUME(IslandKeyword);
+          this.SUBRULE3(this.sizeValue);
+        },
+      },
+      {
+        ALT: () => {
+          this.CONSUME(LayerKeyword);
+
+          this.CONSUME3(NumberLiteral, {
+            LABEL: "count",
+          });
+        },
+      },
+    ]);
+
+    this.OPTION3(() => {
+      this.CONSUME(GreaterThan);
+
+      this.AT_LEAST_ONE(() => {
+        this.CONSUME(StringLiteral, {
+          LABEL: "areaName",
+        });
+      });
+    });
+  },
+);
+
+private sizeValue = this.RULE("sizeValue", () => {
+  this.OR([
+    {
+      ALT: () => this.CONSUME(SizeLiteral),
+    },
+    {
+      ALT: () => this.CONSUME(NumberLiteral),
+    },
+  ]);
+});
 private placement = this.RULE("placement", () => {
   this.SUBRULE(this.areaReference);
   this.CONSUME(GreaterThan);

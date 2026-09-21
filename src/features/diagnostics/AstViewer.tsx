@@ -1,13 +1,9 @@
 import type {
-  PaixComponentDefinitionNode,
-  PaixPageNode,
+  PaixDocumentNode,
 } from "../../paix/ast/ast.types";
 
 interface AstViewerProps {
-  ast:
-    | PaixPageNode
-    | PaixComponentDefinitionNode
-    | null;
+  ast: PaixDocumentNode | null;
 }
 
 export function AstViewer({
@@ -23,7 +19,9 @@ export function AstViewer({
 
   return (
     <pre className="ast-viewer">
-      <code>{JSON.stringify(ast, null, 2)}</code>
+      <code>
+        {JSON.stringify(ast, null, 2)}
+      </code>
     </pre>
   );
 }

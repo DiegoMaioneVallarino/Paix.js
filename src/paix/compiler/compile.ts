@@ -1,14 +1,19 @@
 import type { PaixProject } from "../../project/project.types";
 import { parsePaixComponent } from "../parser/parseComponent";
 import { parsePaixPage } from "../parser/parse";
+import { parsePaixWireframe } from "../parser/parseWireframe";
 import { validatePaixPage } from "../semantic/validate";
 import type { PaixCompiledProject } from "./compiled.types";
+
+import { validatePaixWireframe } from "../semantic/validateWireframe";
 
 export function compilePaixProject(
   project: PaixProject,
 ): PaixCompiledProject {
   const diagnostics: PaixCompiledProject["diagnostics"] = [];
+
   const components: PaixCompiledProject["components"] = {};
+  const wireframes: PaixCompiledProject["wireframes"] = {};
 
   const entryFile = project.files[project.entry];
 
@@ -16,6 +21,8 @@ export function compilePaixProject(
     return {
       entryPage: null,
       components,
+      wireframes,
+
       diagnostics: [
         {
           source: "semantic",
@@ -67,7 +74,9 @@ export function compilePaixProject(
       diagnostics.push({
         source: "semantic",
         severity: "error",
-        message: `Component "${componentName}" is declared more than once.`,
+        message:
+          `Component "${componentName}" ` +
+          "is declared more than once.",
         line: 1,
         column: 1,
         length: componentName.length,
@@ -78,6 +87,57 @@ export function compilePaixProject(
     }
 
     components[componentName] = componentResult.ast;
+  }
+
+  for (const file of Object.values(project.files)) {
+    if (file.type !== "wireframe") {
+      continue;
+    }
+
+    const wireframeResult = parsePaixWireframe(
+      file.content,
+    );
+
+    diagnostics.push(
+      ...wireframeResult.diagnostics.map(
+        (diagnostic) => ({
+          ...diagnostic,
+          filePath: file.path,
+        }),
+      ),
+    );
+
+    if (!wireframeResult.ast) {
+      continue;
+    }
+
+    const wireframeName = wireframeResult.ast.name;
+
+    if (wireframes[wireframeName]) {
+      diagnostics.push({
+        source: "semantic",
+        severity: "error",
+        message:
+          `Wireframe "${wireframeName}" ` +
+          "is declared more than once.",
+        line: 1,
+        column: 1,
+        length: wireframeName.length,
+        filePath: file.path,
+      });
+
+      continue;
+    }
+diagnostics.push(
+  ...validatePaixWireframe(
+    wireframeResult.ast,
+    file.content,
+  ).map((diagnostic) => ({
+    ...diagnostic,
+    filePath: file.path,
+  })),
+);
+    wireframes[wireframeName] = wireframeResult.ast;
   }
 
   if (pageResult.ast) {
@@ -96,6 +156,7 @@ export function compilePaixProject(
   return {
     entryPage: pageResult.ast,
     components,
+    wireframes,
     diagnostics,
   };
 }

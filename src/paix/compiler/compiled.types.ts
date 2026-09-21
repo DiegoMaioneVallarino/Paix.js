@@ -1,6 +1,7 @@
 import type {
   PaixComponentDefinitionNode,
   PaixPageNode,
+  PaixWireframeNode,
 } from "../ast/ast.types";
 
 import type { PaixDiagnostic } from "../diagnostics/diagnostic.types";
@@ -11,6 +12,11 @@ export interface PaixCompiledProject {
   components: Record<
     string,
     PaixComponentDefinitionNode
+  >;
+
+  wireframes: Record<
+    string,
+    PaixWireframeNode
   >;
 
   diagnostics: PaixDiagnostic[];

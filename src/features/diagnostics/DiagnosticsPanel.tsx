@@ -4,8 +4,8 @@ import { AstViewer } from "./AstViewer";
 import type {
   PaixComponentDefinitionNode,
   PaixPageNode,
+  PaixWireframeNode,
 } from "../../paix/ast/ast.types";
-
 import type { PaixDiagnostic } from "../../paix/diagnostics/diagnostic.types";
 type DiagnosticTab =
   | "problems"
@@ -20,6 +20,7 @@ interface DiagnosticsPanelProps {
     ast:
       | PaixPageNode
       | PaixComponentDefinitionNode
+      | PaixWireframeNode
       | null;
 
     diagnostics: PaixDiagnostic[];

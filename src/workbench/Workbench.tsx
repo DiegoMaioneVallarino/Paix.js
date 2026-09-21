@@ -5,12 +5,18 @@ import { DiagnosticsPanel } from "../features/diagnostics/DiagnosticsPanel";
 import { FileExplorer } from "../features/file-explorer/FileExplorer";
 import { PreviewPanel } from "../features/preview/PreviewPanel";
 
+import type { PaixWireframeNode } from "../paix/ast/ast.types";
 import { compilePaixProject } from "../paix/compiler/compile";
 import { parsePaixPage } from "../paix/parser/parse";
 import { parsePaixComponent } from "../paix/parser/parseComponent";
+import { parsePaixWireframe } from "../paix/parser/parseWireframe";
 import { validatePaixPage } from "../paix/semantic/validate";
 
 import { useProjectStore } from "../project/project.store";
+import { FileTypeIcon } from "../features/file-explorer/FileTypeIcon";
+
+import { validatePaixWireframe } from "../paix/semantic/validateWireframe";
+
 
 export function Workbench() {
   const project = useProjectStore(
@@ -58,6 +64,29 @@ export function Workbench() {
       );
     }
 
+    if (activeFile.type === "wireframe") {
+  const syntaxResult = parsePaixWireframe(
+    activeFile.content,
+  );
+
+  if (!syntaxResult.ast) {
+    return syntaxResult;
+  }
+
+  return {
+    ast: syntaxResult.ast,
+
+    diagnostics: [
+      ...syntaxResult.diagnostics,
+
+      ...validatePaixWireframe(
+        syntaxResult.ast,
+        activeFile.content,
+      ),
+    ],
+  };
+    }
+
     if (activeFile.type === "page") {
       const syntaxResult = parsePaixPage(
         activeFile.content,
@@ -88,6 +117,12 @@ export function Workbench() {
     };
   }, [activeFile, project]);
 
+  const inspectedWireframe: PaixWireframeNode | null =
+    activeFile?.type === "wireframe" &&
+    activeAnalysis.ast?.type === "Wireframe"
+      ? activeAnalysis.ast
+      : null;
+
   if (!activeFile) {
     return (
       <section className="workbench">
@@ -112,11 +147,15 @@ export function Workbench() {
     <section className="workbench">
       <header className="workbench-header">
         <div className="brand">
-          <span className="brand-symbol">P</span>
-
+                    <img
+                    className="brand-logo"
+                    src="/images/logo.png"
+                    alt="Paix"
+/>
           <div>
             <strong>
               p<b className="ai-brand-text">ai</b>x
+              <b className="js-type-text">.js</b>
             </strong>
           </div>
         </div>
@@ -163,9 +202,7 @@ export function Workbench() {
               type="button"
               className="editor-tab active"
             >
-              <span className="paix-file-icon">
-                P
-              </span>
+              <FileTypeIcon type={activeFile.type} />
 
               {activeFile.name}
 
@@ -194,6 +231,9 @@ export function Workbench() {
 
         <PreviewPanel
           program={compiledProject}
+          inspectedWireframe={
+            inspectedWireframe
+          }
         />
       </div>
 

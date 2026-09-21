@@ -1,15 +1,20 @@
 import { useState } from "react";
 import { PaixRenderer } from "../../runtime/PaixRenderer";
 import type { PaixCompiledProject } from "../../paix/compiler/compiled.types";
+import type { PaixWireframeNode } from "../../paix/ast/ast.types";
+import { WireframeRenderer } from "../../runtime/WireframeRenderer";
+
 
 type PreviewDevice = "desktop" | "mobile";
 
 interface PreviewPanelProps {
   program: PaixCompiledProject;
+  inspectedWireframe?: PaixWireframeNode | null;
 }
 
 export function PreviewPanel({
   program,
+  inspectedWireframe,
 }: PreviewPanelProps) {
   const [device, setDevice] =
     useState<PreviewDevice>("desktop");
@@ -46,8 +51,14 @@ export function PreviewPanel({
         <div
           className={`preview-canvas preview-${device}`}
         >
-          <PaixRenderer program={program} />
-        </div>
+{inspectedWireframe ? (
+  <WireframeRenderer
+    wireframe={inspectedWireframe}
+    debug
+  />
+) : (
+  <PaixRenderer program={program} />
+)}     </div>
       </div>
     </section>
   );
