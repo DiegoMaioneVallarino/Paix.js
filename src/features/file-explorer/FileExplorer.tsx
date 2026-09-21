@@ -1,9 +1,22 @@
-import { useMemo } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { useProjectStore } from "../../project/project.store";
-import type { PaixFile } from "../../project/project.types";
+
+import type {
+  PaixFile,
+} from "../../project/project.types";
+
+import type {
+  CreatablePaixFileType,
+} from "../../project/virtualFileSystem";
 
 import { FileTreeItem } from "./FileTreeItem";
+import { FileTypeIcon } from "./FileTypeIcon";
 
 const folderOrder = [
   "pages",
@@ -11,6 +24,33 @@ const folderOrder = [
   "wireframes",
   "styles",
   "actions",
+];
+
+const creatableFileTypes: Array<{
+  type: CreatablePaixFileType;
+  label: string;
+  description: string;
+}> = [
+  {
+    type: "page",
+    label: "Page",
+    description: "Application route or screen",
+  },
+  {
+    type: "component",
+    label: "Component",
+    description: "Reusable interface component",
+  },
+  {
+    type: "wireframe",
+    label: "Wireframe",
+    description: "Spatial layout definition",
+  },
+  {
+    type: "style",
+    label: "Style",
+    description: "Reusable visual definition",
+  },
 ];
 
 export function FileExplorer() {
@@ -34,14 +74,90 @@ export function FileExplorer() {
     (state) => state.openFile,
   );
 
+  const createFile = useProjectStore(
+    (state) => state.createFile,
+  );
+
   const toggleFolder = useProjectStore(
     (state) => state.toggleFolder,
   );
 
-  const groupedFiles = useMemo(() => {
-    const groups: Record<string, PaixFile[]> = {};
+  const createControlRef =
+    useRef<HTMLDivElement>(null);
 
-    for (const file of Object.values(project.files)) {
+  const [createMenuOpen, setCreateMenuOpen] =
+    useState(false);
+
+  const [selectedType, setSelectedType] =
+    useState<CreatablePaixFileType | null>(
+      null,
+    );
+
+  const [newFileName, setNewFileName] =
+    useState("");
+
+  const [creationError, setCreationError] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    const handlePointerDown = (
+      event: PointerEvent,
+    ) => {
+      if (
+        createControlRef.current &&
+        !createControlRef.current.contains(
+          event.target as Node,
+        )
+      ) {
+        setCreateMenuOpen(false);
+      }
+    };
+
+    document.addEventListener(
+      "pointerdown",
+      handlePointerDown,
+    );
+
+    return () => {
+      document.removeEventListener(
+        "pointerdown",
+        handlePointerDown,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (
+      event: KeyboardEvent,
+    ) => {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      setCreateMenuOpen(false);
+      closeCreateDialog();
+    };
+
+    document.addEventListener(
+      "keydown",
+      handleKeyDown,
+    );
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown,
+      );
+    };
+  }, []);
+
+  const groupedFiles = useMemo(() => {
+    const groups: Record<string, PaixFile[]> =
+      {};
+
+    for (const file of Object.values(
+      project.files,
+    )) {
       const folder =
         file.path.split("/")[0] ?? "other";
 
@@ -85,19 +201,99 @@ export function FileExplorer() {
     },
   );
 
+  function openCreateDialog(
+    type: CreatablePaixFileType,
+  ) {
+    setSelectedType(type);
+    setNewFileName("");
+    setCreationError(null);
+    setCreateMenuOpen(false);
+  }
+
+  function closeCreateDialog() {
+    setSelectedType(null);
+    setNewFileName("");
+    setCreationError(null);
+  }
+
+  function handleCreateFile(
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
+
+    if (!selectedType) {
+      return;
+    }
+
+    const error = createFile(
+      selectedType,
+      newFileName,
+    );
+
+    if (error) {
+      setCreationError(error);
+      return;
+    }
+
+    closeCreateDialog();
+  }
+
   return (
     <aside className="file-panel panel">
       <div className="panel-header">
         <span>Project</span>
 
-        <button
-          type="button"
-          className="icon-button"
-          aria-label="Create file"
-          title="Create file"
+        <div
+          className="create-file-control"
+          ref={createControlRef}
         >
-          +
-        </button>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Create file"
+            title="Create file"
+            aria-expanded={createMenuOpen}
+            onClick={() =>
+              setCreateMenuOpen(
+                (isOpen) => !isOpen,
+              )
+            }
+          >
+            +
+          </button>
+
+          {createMenuOpen && (
+            <div className="create-file-menu">
+              {creatableFileTypes.map(
+                (option) => (
+                  <button
+                    key={option.type}
+                    type="button"
+                    onClick={() =>
+                      openCreateDialog(
+                        option.type,
+                      )
+                    }
+                  >
+                    <FileTypeIcon
+                      type={option.type}
+                    />
+
+                    <span>
+                      <strong>
+                        {option.label}
+                      </strong>
+
+                      <small>
+                        {option.description}
+                      </small>
+                    </span>
+                  </button>
+                ),
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="file-tree">
@@ -152,6 +348,83 @@ export function FileExplorer() {
           );
         })}
       </div>
+
+      {selectedType && (
+        <div
+          className="create-file-overlay"
+          role="presentation"
+          onPointerDown={closeCreateDialog}
+        >
+          <form
+            className="create-file-dialog"
+            onSubmit={handleCreateFile}
+            onPointerDown={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <div className="create-file-dialog-header">
+              <FileTypeIcon
+                type={selectedType}
+              />
+
+              <div>
+                <strong>
+                  New {selectedType}
+                </strong>
+
+                <span>
+                  Create a new Paix file
+                </span>
+              </div>
+            </div>
+
+            <label htmlFor="new-paix-file-name">
+              Name
+            </label>
+
+            <div className="create-file-name-field">
+              <input
+                id="new-paix-file-name"
+                autoFocus
+                value={newFileName}
+                placeholder="MyComponent"
+                spellCheck={false}
+                onChange={(event) => {
+                  setNewFileName(
+                    event.target.value,
+                  );
+
+                  setCreationError(null);
+                }}
+              />
+
+              <span>.paix</span>
+            </div>
+
+            {creationError && (
+              <p className="create-file-error">
+                {creationError}
+              </p>
+            )}
+
+            <div className="create-file-actions">
+              <button
+                type="button"
+                onClick={closeCreateDialog}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                className="primary"
+              >
+                Create
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </aside>
   );
 }

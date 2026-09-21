@@ -1149,3 +1149,183 @@ b.js-type-text {
   background: transparent;
   border-color: transparent;
 }
+
+.create-file-control {
+  position: relative;
+}
+
+.create-file-menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 5000;
+  display: grid;
+  width: 230px;
+  padding: 6px;
+  background: rgba(5, 17, 25, 0.97);
+  border: 1px solid var(--border-strong);
+  border-radius: 11px;
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(22px);
+}
+
+.create-file-menu > button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 9px;
+  color: var(--text);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.create-file-menu > button:hover {
+  background: var(--surface-hover);
+}
+
+.create-file-menu button > span {
+  display: grid;
+  gap: 2px;
+}
+
+.create-file-menu strong {
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.create-file-menu small {
+  color: var(--text-faint);
+  font-size: 9px;
+}
+
+.create-file-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 7, 12, 0.58);
+  backdrop-filter: blur(8px);
+}
+
+.create-file-dialog {
+  display: grid;
+  width: min(100%, 360px);
+  gap: 12px;
+  padding: 18px;
+  color: var(--text);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(14, 39, 56, 0.98),
+      rgba(4, 15, 23, 0.98)
+    );
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.create-file-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 3px;
+}
+
+.create-file-dialog-header > div {
+  display: grid;
+  gap: 2px;
+}
+
+.create-file-dialog-header strong {
+  font-size: 14px;
+  text-transform: capitalize;
+}
+
+.create-file-dialog-header span {
+  color: var(--text-faint);
+  font-size: 10px;
+}
+
+.create-file-dialog label {
+  color: var(--text-soft);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.create-file-name-field {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: rgba(0, 8, 13, 0.62);
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+}
+
+.create-file-name-field:focus-within {
+  border-color: rgba(41, 168, 255, 0.62);
+  box-shadow: 0 0 0 3px rgba(41, 168, 255, 0.1);
+}
+
+.create-file-name-field input {
+  min-width: 0;
+  flex: 1;
+  padding: 10px 11px;
+  color: var(--text);
+  font: inherit;
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+
+.create-file-name-field > span {
+  padding: 0 11px;
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+.create-file-error {
+  margin: 0;
+  color: #ffaaaa;
+  font-size: 10px;
+}
+
+.create-file-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.create-file-actions button {
+  padding: 7px 13px;
+  color: var(--text-soft);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.create-file-actions button:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+.create-file-actions button.primary {
+  color: #00121e;
+  font-weight: 700;
+  background:
+    linear-gradient(145deg, #ffffff, #82d9ff);
+  border-color: rgba(204, 242, 255, 0.42);
+}

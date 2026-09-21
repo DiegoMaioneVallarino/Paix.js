@@ -1,17 +1,41 @@
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
-import { counterProject } from "../examples/counterProject";
-import { PAIX_PROJECT_STORAGE_KEY } from "./persistence";
-import type { PaixProject } from "./project.types";
 
-interface ProjectStore {
+import {
+  createJSONStorage,
+  persist,
+} from "zustand/middleware";
+
+import { counterProject } from "../examples/counterProject";
+
+import { PAIX_PROJECT_STORAGE_KEY } from "./persistence";
+
+import type {
+  PaixProject,
+} from "./project.types";
+
+import {
+  createPaixFile,
+  type CreatablePaixFileType,
+} from "./virtualFileSystem";
+
+export interface ProjectStore {
   project: PaixProject;
   activeFilePath: string;
   openFolders: string[];
   modifiedFiles: string[];
 
   openFile: (path: string) => void;
-  updateFile: (path: string, content: string) => void;
+
+  updateFile: (
+    path: string,
+    content: string,
+  ) => void;
+
+  createFile: (
+    type: CreatablePaixFileType,
+    name: string,
+  ) => string | null;
+
   toggleFolder: (folder: string) => void;
   resetProject: () => void;
 }
@@ -20,121 +44,203 @@ function createInitialProject(): PaixProject {
   return structuredClone(counterProject);
 }
 
-export const useProjectStore = create<ProjectStore>()(
-  persist(
-    (set, get) => ({
-      project: createInitialProject(),
-      activeFilePath: counterProject.entry,
-      openFolders: [
-        "pages",
-        "components",
-        "wireframes",
-        "styles",
-      ],
-      modifiedFiles: [],
+export const useProjectStore =
+  create<ProjectStore>()(
+    persist(
+      (set, get) => ({
+        project: createInitialProject(),
+        activeFilePath: counterProject.entry,
 
-      openFile: (path) => {
-        const fileExists = Boolean(get().project.files[path]);
+        openFolders: [
+          "pages",
+          "components",
+          "wireframes",
+          "styles",
+        ],
 
-        if (!fileExists) {
-          return;
-        }
+        modifiedFiles: [],
 
-        set({
-          activeFilePath: path,
-        });
-      },
+        openFile: (path) => {
+          const fileExists = Boolean(
+            get().project.files[path],
+          );
 
-      updateFile: (path, content) => {
-        set((state) => {
-          const currentFile = state.project.files[path];
-
-          if (!currentFile || currentFile.content === content) {
-            return state;
+          if (!fileExists) {
+            return;
           }
 
-          const originalContent =
-            counterProject.files[path]?.content;
+          set({
+            activeFilePath: path,
+          });
+        },
 
-          const isDifferentFromOriginal =
-            originalContent === undefined ||
-            originalContent !== content;
+        updateFile: (path, content) => {
+          set((state) => {
+            const currentFile =
+              state.project.files[path];
 
-          const isAlreadyModified =
-            state.modifiedFiles.includes(path);
+            if (
+              !currentFile ||
+              currentFile.content === content
+            ) {
+              return state;
+            }
 
-          let nextModifiedFiles = state.modifiedFiles;
+            const originalContent =
+              counterProject.files[path]?.content;
 
-          if (isDifferentFromOriginal && !isAlreadyModified) {
-            nextModifiedFiles = [...state.modifiedFiles, path];
+            const isDifferentFromOriginal =
+              originalContent === undefined ||
+              originalContent !== content;
+
+            const isAlreadyModified =
+              state.modifiedFiles.includes(path);
+
+            let nextModifiedFiles =
+              state.modifiedFiles;
+
+            if (
+              isDifferentFromOriginal &&
+              !isAlreadyModified
+            ) {
+              nextModifiedFiles = [
+                ...state.modifiedFiles,
+                path,
+              ];
+            }
+
+            if (
+              !isDifferentFromOriginal &&
+              isAlreadyModified
+            ) {
+              nextModifiedFiles =
+                state.modifiedFiles.filter(
+                  (filePath) =>
+                    filePath !== path,
+                );
+            }
+
+            return {
+              project: {
+                ...state.project,
+
+                files: {
+                  ...state.project.files,
+
+                  [path]: {
+                    ...currentFile,
+                    content,
+                  },
+                },
+              },
+
+              modifiedFiles:
+                nextModifiedFiles,
+            };
+          });
+        },
+
+        createFile: (type, name) => {
+          const result = createPaixFile(
+            get().project,
+            type,
+            name,
+          );
+
+          if (!result.ok) {
+            return result.error;
           }
 
-          if (!isDifferentFromOriginal && isAlreadyModified) {
-            nextModifiedFiles = state.modifiedFiles.filter(
-              (filePath) => filePath !== path,
-            );
-          }
+          const { file, folder } = result;
 
-          return {
+          set((state) => ({
             project: {
               ...state.project,
 
               files: {
                 ...state.project.files,
-
-                [path]: {
-                  ...currentFile,
-                  content,
-                },
+                [file.path]: file,
               },
             },
 
-            modifiedFiles: nextModifiedFiles,
-          };
-        });
-      },
+            activeFilePath: file.path,
 
-      toggleFolder: (folder) => {
-        set((state) => {
-          const isOpen = state.openFolders.includes(folder);
+            openFolders:
+              state.openFolders.includes(folder)
+                ? state.openFolders
+                : [
+                    ...state.openFolders,
+                    folder,
+                  ],
 
-          return {
-            openFolders: isOpen
-              ? state.openFolders.filter(
-                  (item) => item !== folder,
-                )
-              : [...state.openFolders, folder],
-          };
-        });
-      },
+            modifiedFiles:
+              state.modifiedFiles.includes(
+                file.path,
+              )
+                ? state.modifiedFiles
+                : [
+                    ...state.modifiedFiles,
+                    file.path,
+                  ],
+          }));
 
-      resetProject: () => {
-        set({
-          project: createInitialProject(),
-          activeFilePath: counterProject.entry,
-          openFolders: [
-            "pages",
-            "components",
-            "wireframes",
-            "styles",
-          ],
-          modifiedFiles: [],
-        });
-      },
-    }),
+          return null;
+        },
 
-    {
-      name: PAIX_PROJECT_STORAGE_KEY,
-      version: 1,
+        toggleFolder: (folder) => {
+          set((state) => {
+            const isOpen =
+              state.openFolders.includes(folder);
 
-      storage: createJSONStorage(() => localStorage),
+            return {
+              openFolders: isOpen
+                ? state.openFolders.filter(
+                    (item) => item !== folder,
+                  )
+                : [
+                    ...state.openFolders,
+                    folder,
+                  ],
+            };
+          });
+        },
 
-      partialize: (state) => ({
-        project: state.project,
-        activeFilePath: state.activeFilePath,
-        openFolders: state.openFolders,
-        modifiedFiles: state.modifiedFiles,
+        resetProject: () => {
+          set({
+            project: createInitialProject(),
+            activeFilePath:
+              counterProject.entry,
+
+            openFolders: [
+              "pages",
+              "components",
+              "wireframes",
+              "styles",
+            ],
+
+            modifiedFiles: [],
+          });
+        },
       }),
-    },
-  ),
-);
+
+      {
+        name: PAIX_PROJECT_STORAGE_KEY,
+        version: 1,
+
+        storage: createJSONStorage(
+          () => localStorage,
+        ),
+
+        partialize: (
+          state: ProjectStore,
+        ) => ({
+          project: state.project,
+          activeFilePath:
+            state.activeFilePath,
+          openFolders: state.openFolders,
+          modifiedFiles:
+            state.modifiedFiles,
+        }),
+      },
+    ),
+  );
