@@ -40,7 +40,10 @@ LayerKeyword,
 GridSizeLiteral,
 SizeLiteral,
 ThisKeyword,
-OtherwiseKeyword
+OtherwiseKeyword,
+StyleKeyword,
+WhenKeyword,
+HexColorLiteral,
 } from "../lexer/tokens";
 
 export class PaixParser extends CstParser {
@@ -69,6 +72,180 @@ public wireframe = this.RULE("wireframe", () => {
 
   this.CONSUME(EOF);
 });
+private componentStyleSection = this.RULE(
+  "componentStyleSection",
+  () => {
+    this.CONSUME(StyleKeyword);
+    this.CONSUME(Colon);
+
+    this.CONSUME(Identifier, {
+      LABEL: "styleName",
+    });
+  },
+);
+private isStyleDeclarationAhead(): boolean {
+  const currentType =
+    this.LA(1).tokenType;
+
+  const nextType =
+    this.LA(2).tokenType;
+
+  const isPropertyName =
+    currentType === Identifier ||
+    currentType === GridKeyword;
+
+  return (
+    isPropertyName &&
+    nextType === Colon
+  );
+}
+
+private isStyleValueAhead(): boolean {
+  const currentType =
+    this.LA(1).tokenType;
+
+  if (
+    currentType === EOF ||
+    currentType === WhenKeyword
+  ) {
+    return false;
+  }
+
+  return !this.isStyleDeclarationAhead();
+}
+
+private styleDeclaration = this.RULE(
+  "styleDeclaration",
+  () => {
+    this.OR([
+      {
+        ALT: () =>
+          this.CONSUME(Identifier, {
+            LABEL: "propertyName",
+          }),
+      },
+      {
+        ALT: () =>
+          this.CONSUME(GridKeyword, {
+            LABEL: "propertyName",
+          }),
+      },
+    ]);
+
+    this.CONSUME(Colon);
+
+    this.AT_LEAST_ONE({
+      GATE: () =>
+        this.isStyleValueAhead(),
+
+      DEF: () => {
+        this.SUBRULE(this.styleValueAtom);
+      },
+    });
+  },
+);
+
+private styleCondition = this.RULE(
+  "styleCondition",
+  () => {
+    this.CONSUME(WhenKeyword);
+
+    this.SUBRULE(this.expression, {
+      LABEL: "condition",
+    });
+
+    this.CONSUME(Colon);
+
+    this.AT_LEAST_ONE({
+      GATE: () =>
+        this.isStyleDeclarationAhead(),
+
+      DEF: () => {
+        this.SUBRULE(this.styleDeclaration);
+      },
+    });
+  },
+);
+
+private styleValueAtom = this.RULE(
+  "styleValueAtom",
+  () => {
+    this.OR([
+      {
+        ALT: () =>
+          this.CONSUME(Identifier, {
+            LABEL: "valueToken",
+          }),
+      },
+      {
+        ALT: () =>
+          this.CONSUME(StringLiteral, {
+            LABEL: "valueToken",
+          }),
+      },
+      {
+        ALT: () =>
+          this.CONSUME(HexColorLiteral, {
+            LABEL: "valueToken",
+          }),
+      },
+      {
+        ALT: () =>
+          this.CONSUME(SizeLiteral, {
+            LABEL: "valueToken",
+          }),
+      },
+      {
+        ALT: () =>
+          this.CONSUME(NumberLiteral, {
+            LABEL: "valueToken",
+          }),
+      },
+      {
+        ALT: () =>
+          this.CONSUME(TrueKeyword, {
+            LABEL: "valueToken",
+          }),
+      },
+      {
+        ALT: () =>
+          this.CONSUME(FalseKeyword, {
+            LABEL: "valueToken",
+          }),
+      },
+      {
+        ALT: () =>
+          this.CONSUME(NoneKeyword, {
+            LABEL: "valueToken",
+          }),
+      },
+      {
+        ALT: () =>
+          this.CONSUME(Minus, {
+            LABEL: "valueToken",
+          }),
+      },
+      {
+        ALT: () =>
+          this.CONSUME(Comma, {
+            LABEL: "valueToken",
+          }),
+      },
+      {
+        ALT: () =>
+          this.CONSUME(LeftParenthesis, {
+            LABEL: "valueToken",
+          }),
+      },
+      {
+        ALT: () =>
+          this.CONSUME(RightParenthesis, {
+            LABEL: "valueToken",
+          }),
+      },
+    ]);
+  },
+);
 
 public component = this.RULE("component", () => {
   this.CONSUME(ComponentKeyword);
@@ -79,15 +256,34 @@ public component = this.RULE("component", () => {
   });
 
   this.OPTION(() => {
-    this.SUBRULE(this.parameterSection);
+    this.SUBRULE(this.componentStyleSection);
   });
 
   this.OPTION2(() => {
+    this.SUBRULE(this.parameterSection);
+  });
+
+  this.OPTION3(() => {
     this.SUBRULE(this.stateSection);
   });
 
   this.MANY(() => {
     this.SUBRULE(this.placement);
+  });
+
+  this.CONSUME(EOF);
+});
+
+public style = this.RULE("style", () => {
+  this.CONSUME(StyleKeyword);
+  this.CONSUME(StringLiteral);
+
+  this.MANY(() => {
+    this.SUBRULE(this.styleDeclaration);
+  });
+
+  this.MANY2(() => {
+    this.SUBRULE(this.styleCondition);
   });
 
   this.CONSUME(EOF);
@@ -247,6 +443,8 @@ private sliceDeclaration = this.RULE(
     });
   },
 );
+
+
 
 private sizeValue = this.RULE("sizeValue", () => {
   this.OR([

@@ -191,17 +191,32 @@ export const ThisKeyword = createToken({
   pattern: /this\b/,
 });
 
+export const StyleKeyword = createToken({
+  name: "StyleKeyword",
+  pattern: /style\b/,
+});
+
+export const WhenKeyword = createToken({
+  name: "WhenKeyword",
+  pattern: /when\b/,
+});
+
+export const HexColorLiteral = createToken({
+  name: "HexColorLiteral",
+  pattern: /#[0-9a-fA-F]{3,8}\b/,
+});
+
 export const allTokens: TokenType[] = [
   WhiteSpace,
   Comment,
 
   ComponentKeyword,
   WireframeKeyword,
+  StyleKeyword,
   ParametersKeyword,
   StateKeyword,
   PageKeyword,
   ThisKeyword,
-  OtherwiseKeyword,
 
   SliceKeyword,
   VerticalKeyword,
@@ -213,11 +228,15 @@ export const allTokens: TokenType[] = [
   IslandKeyword,
   LayerKeyword,
 
+  WhenKeyword,
+  OtherwiseKeyword,
+
   TrueKeyword,
   FalseKeyword,
   NoneKeyword,
 
   StringLiteral,
+  HexColorLiteral,
   GridSizeLiteral,
   SizeLiteral,
   NumberLiteral,
@@ -238,7 +257,6 @@ export const allTokens: TokenType[] = [
   LeftBracket,
   RightBracket,
 ];
-
 export const paixLexer = new Lexer(allTokens);
 
 

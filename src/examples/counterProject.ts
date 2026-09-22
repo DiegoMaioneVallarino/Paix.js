@@ -65,12 +65,12 @@ actionsArea slice columns 2`,
       content: `page "home" MainFrame
 
 headerArea >
-    Text(value: "Paix Components")
+    Text(value: "Hello Paix")
 
 contentArea.slots > [
-    Counter(label: "Visitors"),
-    Counter(label: "Articles"),
-    Counter(label: "Subscribers")
+    Button(label: "Home"),
+    Button(label: "Catalogue"),
+    Button(label: "Contact")
 ]`,
     },
 
@@ -141,19 +141,21 @@ main slice horizontal 72 >
 contentArea slice columns 3`,
     },
 
-    "styles/GlassPanel.paix": {
-      id: "glass-style",
-      name: "GlassPanel.paix",
-      path: "styles/GlassPanel.paix",
-      type: "style",
+ "styles/GlassPanel.paix": {
+  id: "glass-style",
+  name: "GlassPanel.paix",
+  path: "styles/GlassPanel.paix",
+  type: "style",
 
-      content: `style "GlassPanel"
+  content: `style "GlassPanel"
 
-surface: glass
-background: translucent
-radius: medium
-shadow: soft
-border: subtle`,
-    },
+background: gradient from #071b2bcc to #0d3a5ccc
+color: #f4fbff
+border: 1 solid #38bdf866
+radius: 18
+shadow: soft #00101a99
+backdropBlur: 18
+transition: smooth 180`,
+},
   },
 };

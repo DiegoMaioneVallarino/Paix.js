@@ -49,76 +49,114 @@ export function registerPaixLanguage(monaco: Monaco) {
 
   monaco.languages.setMonarchTokensProvider(PAIX_LANGUAGE_ID, {
     keywords: [
-      "application",
-      "page",
-      "component",
-      "components",
-      "wireframe",
-      "wireframes",
-      "state",
-      "action",
-      "setter",
-      "when",
-      "otherwise",
-      "place",
-      "in",
-      "this",
-      "use",
-      "style",
-      "styles",
-      "repeat",
-      "as",
-      "from",
-      "request",
-      "shared",
-      "resource",
-      "finally",
-      "slice",
-"columns",
-"rows",
-"grid",
-"slots",
-    ],
+  "application",
+  "page",
+  "component",
+  "components",
+  "wireframe",
+  "wireframes",
+  "state",
+  "action",
+  "setter",
+  "when",
+  "otherwise",
+  "place",
+  "in",
+  "this",
+  "use",
+  "style",
+  "styles",
+  "repeat",
+  "as",
+  "from",
+  "request",
+  "shared",
+  "resource",
+  "finally",
+  "slice",
+  "vertical",
+  "horizontal",
+  "centered",
+  "columns",
+  "rows",
+  "grid",
+  "island",
+  "layer",
+  "slots",
+],
 
     constants: ["true", "false", "none", "empty"],
 
     tokenizer: {
-      root: [
-        [/\/\/.*$/, "comment"],
+  root: [
+    [/\/\/.*$/, "comment"],
 
-        [
-          /\b(application|page|component|components|wireframe|wireframes|state|action|setter|when|otherwise|place|in|use|style|styles|repeat|as|from|request|shared|resource|finally)\b/,
-          "keyword",
-        ],
+    // Debe aparecer antes de reconocer "this" como keyword.
+    [
+      /\bthis\.[a-zA-Z][a-zA-Z0-9_]*/,
+      "variable.predefined",
+    ],
 
-        [/\b(onSuccess|onError|onClick|onInput|onChange|onSubmit|onLoad)\b/, "event"],
-        [/\bon[A-Z][a-zA-Z0-9_]*/, "event"],
+    [
+      /\b(onSuccess|onError|onClick|onInput|onChange|onSubmit|onLoad)\b/,
+      "event",
+    ],
+    [/\bon[A-Z][a-zA-Z0-9_]*/, "event"],
 
-        [/\bset_[a-zA-Z_][a-zA-Z0-9_]*/, "setter"],
-        [/\b_[a-zA-Z][a-zA-Z0-9_]*/, "state"],
+    [/\bset_[a-zA-Z_][a-zA-Z0-9_]*/, "setter"],
+    [/\b_[a-zA-Z][a-zA-Z0-9_]*/, "state"],
 
-        [/\b(true|false|none|empty)\b/, "constant"],
-        [/\b[A-Z][a-zA-Z0-9_]*/, "component"],
+    [/\b[A-Z][a-zA-Z0-9_]*/, "component"],
 
-        [/"([^"\\]|\\.)*$/, "string.invalid"],
-        [/"/, { token: "string.quote", bracket: "@open", next: "@string" }],
+    [/"([^"\\]|\\.)*$/, "string.invalid"],
+    [
+      /"/,
+      {
+        token: "string.quote",
+        bracket: "@open",
+        next: "@string",
+      },
+    ],
 
-        [/\d+(\.\d+)?(%|px|rem|vh|vw)?/, "number"],
+    [/#[0-9a-fA-F]{3,8}\b/, "number.hex"],
 
-        [/[>&]/, "layoutOperator"],
-        [/:/, "assignmentOperator"],
-        [/[=+\-*/]/, "operator"],
-        [/\bthis\.[a-zA-Z][\w]*/, "variable.predefined"],
-        [/[{}[\]()]/, "@brackets"],
-        [/[a-zA-Z][a-zA-Z0-9_]*/, "identifier"],
-        [/[,.]/, "delimiter"],
-      ],
+    [
+      /\d+(\.\d+)?(%|px|rem|vh|vw)?/,
+      "number",
+    ],
 
-      string: [
-        [/[^\\"]+/, "string"],
-        [/\\./, "string.escape"],
-        [/"/, { token: "string.quote", bracket: "@close", next: "@pop" }],
-      ],
-    },
+    [/[>&]/, "layoutOperator"],
+    [/:/, "assignmentOperator"],
+    [/[=+\-*/]/, "operator"],
+
+    [/[{}[\]()]/, "@brackets"],
+    [/[,.]/, "delimiter"],
+
+    [
+      /[a-zA-Z][a-zA-Z0-9_]*/,
+      {
+        cases: {
+          "@keywords": "keyword",
+          "@constants": "constant",
+          "@default": "identifier",
+        },
+      },
+    ],
+  ],
+
+  string: [
+    [/[^\\"]+/, "string"],
+    [/\\./, "string.escape"],
+
+    [
+      /"/,
+      {
+        token: "string.quote",
+        bracket: "@close",
+        next: "@pop",
+      },
+    ],
+  ],
+},
   });
 }

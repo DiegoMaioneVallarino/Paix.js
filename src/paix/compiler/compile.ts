@@ -7,6 +7,13 @@ import type { PaixCompiledProject } from "./compiled.types";
 
 import { validatePaixWireframe } from "../semantic/validateWireframe";
 
+import { parsePaixStyle } from "../parser/parseStyle";
+
+import {
+  validatePaixStyle,
+} from "../semantic/validateStyle";
+
+
 export function compilePaixProject(
   project: PaixProject,
 ): PaixCompiledProject {
@@ -14,14 +21,20 @@ export function compilePaixProject(
 
   const components: PaixCompiledProject["components"] = {};
   const wireframes: PaixCompiledProject["wireframes"] = {};
+const styles: PaixCompiledProject["styles"] = {};
 
+const componentSourcePaths: Record<
+  string,
+  string
+> = {};
   const entryFile = project.files[project.entry];
 
   if (!entryFile) {
     return {
-      entryPage: null,
-      components,
-      wireframes,
+       entryPage: null,
+  components,
+  wireframes,
+  styles,
 
       diagnostics: [
         {
@@ -87,6 +100,7 @@ export function compilePaixProject(
     }
 
     components[componentName] = componentResult.ast;
+componentSourcePaths[componentName] = file.path;
   }
 
   for (const file of Object.values(project.files)) {
@@ -139,6 +153,92 @@ diagnostics.push(
 );
     wireframes[wireframeName] = wireframeResult.ast;
   }
+for (
+  const file of Object.values(project.files)
+) {
+  if (file.type !== "style") {
+    continue;
+  }
+
+  const styleResult =
+    parsePaixStyle(file.content);
+
+  diagnostics.push(
+    ...styleResult.diagnostics.map(
+      (diagnostic) => ({
+        ...diagnostic,
+        filePath: file.path,
+      }),
+    ),
+  );
+
+  if (!styleResult.ast) {
+    continue;
+  }
+
+  diagnostics.push(
+    ...validatePaixStyle(
+      styleResult.ast,
+      file.content,
+    ).map((diagnostic) => ({
+      ...diagnostic,
+      filePath: file.path,
+    })),
+  );
+
+  const styleName =
+    styleResult.ast.name;
+
+  if (styles[styleName]) {
+    diagnostics.push({
+      source: "semantic",
+      severity: "error",
+
+      message:
+        `Style "${styleName}" ` +
+        "is declared more than once.",
+
+      line: 1,
+      column: 1,
+      length: styleName.length,
+      filePath: file.path,
+    });
+
+    continue;
+  }
+
+  styles[styleName] =
+    styleResult.ast;
+}
+
+for (
+  const [componentName, component]
+  of Object.entries(components)
+) {
+  if (!component.style) {
+    continue;
+  }
+
+  if (styles[component.style]) {
+    continue;
+  }
+
+  diagnostics.push({
+    source: "semantic",
+    severity: "error",
+
+    message:
+      `Component "${componentName}" uses ` +
+      `unknown style "${component.style}".`,
+
+    line: 1,
+    column: 1,
+    length: component.style.length,
+
+    filePath:
+      componentSourcePaths[componentName],
+  });
+}
 
   if (pageResult.ast) {
     diagnostics.push(
@@ -154,9 +254,10 @@ diagnostics.push(
   }
 
   return {
-    entryPage: pageResult.ast,
-    components,
-    wireframes,
-    diagnostics,
-  };
+  entryPage: pageResult.ast,
+  components,
+  wireframes,
+  styles,
+  diagnostics,
+};
 }

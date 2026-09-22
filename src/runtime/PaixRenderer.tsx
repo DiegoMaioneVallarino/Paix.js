@@ -42,6 +42,12 @@ import {
   WireframeRenderer,
 } from "./WireframeRenderer";
 
+import {
+  PaixStyleSheet,
+  resolvePaixStyleClasses,
+} from "./StyleRuntime";
+
+
 registerStandardLibrary();
 
 interface PaixRendererProps {
@@ -66,31 +72,39 @@ export function PaixRenderer({
 
   if (wireframe) {
     return (
-      <div className="paix-page">
-        <ScopedWireframe
-          wireframe={wireframe}
-          placements={page.placements}
-          program={program}
-          scope={{}}
-          stack={[]}
-        />
-      </div>
-    );
+  <div className="paix-page">
+    <PaixStyleSheet
+      styles={program.styles}
+    />
+
+    <ScopedWireframe
+      wireframe={wireframe}
+      placements={page.placements}
+      program={program}
+      scope={{}}
+      stack={[]}
+    />
+  </div>
+);
   }
 
   return (
-    <div className="paix-page">
-      {page.placements.map(
-        (placement, index) => (
-          <PagePlacement
-            key={`${placement.target.path}-${index}`}
-            placement={placement}
-            program={program}
-          />
-        ),
-      )}
-    </div>
-  );
+  <div className="paix-page">
+    <PaixStyleSheet
+      styles={program.styles}
+    />
+
+    {page.placements.map(
+      (placement, index) => (
+        <PagePlacement
+          key={`${placement.target.path}-${index}`}
+          placement={placement}
+          program={program}
+        />
+      ),
+    )}
+  </div>
+);
 }
 
 interface PagePlacementProps {
@@ -405,14 +419,34 @@ function UserDefinedComponent({
     );
   }
 
+  const styleDefinition =
+    definition.style
+      ? program.styles[definition.style]
+      : undefined;
+
+  const styleClasses = styleDefinition
+    ? resolvePaixStyleClasses(
+        styleDefinition,
+        localScope,
+      )
+    : "";
+
   return (
     <div
-      className="paix-user-component"
+      className={[
+        "paix-user-component",
+        styleClasses,
+      ]
+        .filter(Boolean)
+        .join(" ")}
       data-paix-component={
         definition.name
       }
       data-paix-wireframe={
         definition.wireframe
+      }
+      data-paix-style={
+        definition.style ?? undefined
       }
     >
       <ScopedWireframe

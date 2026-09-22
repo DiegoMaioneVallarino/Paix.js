@@ -16,7 +16,11 @@ import { useProjectStore } from "../project/project.store";
 import { FileTypeIcon } from "../features/file-explorer/FileTypeIcon";
 
 import { validatePaixWireframe } from "../paix/semantic/validateWireframe";
+import { parsePaixStyle } from "../paix/parser/parseStyle";
 
+import {
+  validatePaixStyle,
+} from "../paix/semantic/validateStyle";
 
 export function Workbench() {
   const project = useProjectStore(
@@ -86,7 +90,28 @@ export function Workbench() {
     ],
   };
     }
+if (activeFile.type === "style") {
+  const syntaxResult = parsePaixStyle(
+    activeFile.content,
+  );
 
+  if (!syntaxResult.ast) {
+    return syntaxResult;
+  }
+
+  return {
+    ast: syntaxResult.ast,
+
+    diagnostics: [
+      ...syntaxResult.diagnostics,
+
+      ...validatePaixStyle(
+        syntaxResult.ast,
+        activeFile.content,
+      ),
+    ],
+  };
+}
     if (activeFile.type === "page") {
       const syntaxResult = parsePaixPage(
         activeFile.content,

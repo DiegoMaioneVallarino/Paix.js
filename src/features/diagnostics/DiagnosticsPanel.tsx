@@ -1,11 +1,15 @@
 import { useState } from "react";
 import type { PaixFileType } from "../../project/project.types";
 import { AstViewer } from "./AstViewer";
+
 import type {
   PaixComponentDefinitionNode,
   PaixPageNode,
+  PaixStyleNode,
   PaixWireframeNode,
 } from "../../paix/ast/ast.types";
+
+
 import type { PaixDiagnostic } from "../../paix/diagnostics/diagnostic.types";
 type DiagnosticTab =
   | "problems"
@@ -18,10 +22,11 @@ interface DiagnosticsPanelProps {
 
   parseResult: {
     ast:
-      | PaixPageNode
-      | PaixComponentDefinitionNode
-      | PaixWireframeNode
-      | null;
+  | PaixPageNode
+  | PaixComponentDefinitionNode
+  | PaixWireframeNode
+  | PaixStyleNode
+  | null;
 
     diagnostics: PaixDiagnostic[];
   };
@@ -33,11 +38,13 @@ export function DiagnosticsPanel({
 }: DiagnosticsPanelProps) {
   const [activeTab, setActiveTab] =
     useState<DiagnosticTab>("problems");
-
 const parserAvailable =
   fileType === "page" ||
-  fileType === "component";
-    const problemCount = parseResult.diagnostics.length;
+  fileType === "component" ||
+  fileType === "wireframe" ||
+  fileType === "style";
+
+const problemCount = parseResult.diagnostics.length;
 
   return (
     <footer className="diagnostics-panel panel">
@@ -100,9 +107,9 @@ const parserAvailable =
                 <div>
                   <strong>No problems detected</strong>
                   <p>
-                    The active Paix page was parsed
-                    successfully.
-                  </p>
+  The active Paix {fileType} was parsed
+  successfully.
+</p>
                 </div>
               </div>
             )}

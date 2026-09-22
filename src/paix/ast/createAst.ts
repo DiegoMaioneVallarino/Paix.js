@@ -23,7 +23,10 @@ PaixSizeNode,
 PaixSliceNode,
 PaixWireframeNode,
 PaixInputReferenceNode,
-PaixOtherwiseExpressionNode
+PaixOtherwiseExpressionNode,
+PaixStyleNode,
+PaixStylePropertyNode,
+PaixStyleConditionNode,
 } from "./ast.types";
 
 type CstChildren = CstNode["children"];
@@ -36,7 +39,85 @@ class PaixAstVisitor extends BasePaixVisitor {
     super();
     this.validateVisitor();
   }
+public componentStyleSection(
+  ctx: CstChildren,
+): string {
+  const styleName =
+    ctx.styleName?.[0] as IToken;
 
+  return styleName.image;
+}
+
+public style(ctx: CstChildren): PaixStyleNode {
+  const nameToken =
+    ctx.StringLiteral?.[0] as IToken;
+
+  const propertyNodes =
+    (ctx.styleDeclaration ?? []) as CstNode[];
+
+  const conditionNodes =
+    (ctx.styleCondition ?? []) as CstNode[];
+
+  return {
+    type: "Style",
+    name: parseString(nameToken.image),
+
+    properties: propertyNodes.map((node) =>
+      this.visit(node),
+    ),
+
+    conditions: conditionNodes.map((node) =>
+      this.visit(node),
+    ),
+  };
+}
+
+public styleDeclaration(
+  ctx: CstChildren,
+): PaixStylePropertyNode {
+  const propertyName =
+    ctx.propertyName?.[0] as IToken;
+
+  const valueNodes =
+    (ctx.styleValueAtom ?? []) as CstNode[];
+
+  return {
+    type: "StyleProperty",
+    name: propertyName.image,
+
+    value: valueNodes
+      .map((node) => this.visit(node) as string)
+      .join(" "),
+  };
+}
+
+public styleCondition(
+  ctx: CstChildren,
+): PaixStyleConditionNode {
+  const condition =
+    ctx.condition?.[0] as CstNode;
+
+  const propertyNodes =
+    (ctx.styleDeclaration ?? []) as CstNode[];
+
+  return {
+    type: "StyleCondition",
+    condition: this.visit(condition),
+
+    properties: propertyNodes.map((node) =>
+      this.visit(node),
+    ),
+  };
+}
+
+public styleValueAtom(
+  ctx: CstChildren,
+): string {
+  const token =
+    ctx.valueToken?.[0] as IToken;
+
+  return token.image;
+}
   public page(ctx: CstChildren): PaixPageNode {
     const nameToken = ctx.StringLiteral?.[0] as IToken;
     const wireframeToken =
@@ -227,7 +308,14 @@ public component(
 
   const wireframeToken =
     ctx.wireframe?.[0] as IToken;
+const styleSection =
+  ctx.componentStyleSection?.[0] as
+    | CstNode
+    | undefined;
 
+const style = styleSection
+  ? (this.visit(styleSection) as string)
+  : null;
   const parameterSection =
     ctx.parameterSection?.[0] as
       | CstNode
@@ -254,16 +342,17 @@ public component(
     : [];
 
   return {
-    type: "ComponentDefinition",
-    name: parseString(nameToken.image),
-    wireframe: wireframeToken.image,
-    parameters,
-    states,
+  type: "ComponentDefinition",
+  name: parseString(nameToken.image),
+  wireframe: wireframeToken.image,
+  style,
+  parameters,
+  states,
 
-    placements: placements.map((node) =>
-      this.visit(node),
-    ),
-  };
+  placements: placements.map((node) =>
+    this.visit(node),
+  ),
+};
 }
 
 public parameterSection(

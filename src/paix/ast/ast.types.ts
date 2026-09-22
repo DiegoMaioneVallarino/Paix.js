@@ -102,10 +102,30 @@ export interface PaixStateNode {
   initialValue: PaixExpressionNode;
 }
 
+export interface PaixStylePropertyNode {
+  type: "StyleProperty";
+  name: string;
+  value: string;
+}
+
+export interface PaixStyleConditionNode {
+  type: "StyleCondition";
+  condition: PaixExpressionNode;
+  properties: PaixStylePropertyNode[];
+}
+
+export interface PaixStyleNode {
+  type: "Style";
+  name: string;
+  properties: PaixStylePropertyNode[];
+  conditions: PaixStyleConditionNode[];
+}
+
 export interface PaixComponentDefinitionNode {
   type: "ComponentDefinition";
   name: string;
   wireframe: string;
+  style: string | null;
   parameters: PaixParameterNode[];
   states: PaixStateNode[];
   placements: PaixPlacementNode[];
@@ -161,4 +181,5 @@ export interface PaixWireframeNode {
 export type PaixDocumentNode =
   | PaixPageNode
   | PaixComponentDefinitionNode
-  | PaixWireframeNode;
+  | PaixWireframeNode
+  | PaixStyleNode;
