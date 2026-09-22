@@ -65,12 +65,24 @@ actionsArea slice columns 2`,
       content: `page "home" MainFrame
 
 headerArea >
-    Text(value: "Hello Paix")
+    Text(
+        value: "Hello Paix",
+        style: GlassPanel
+    )
 
 contentArea.slots > [
-    Button(label: "Home"),
-    Button(label: "Catalogue"),
-    Button(label: "Contact")
+    Button(
+        label: "Home",
+        style: GlassPanel
+    ),
+    Button(
+        label: "Catalogue",
+        style: GlassPanel
+    ),
+    Button(
+        label: "Contact",
+        style: GlassPanel
+    )
 ]`,
     },
 
@@ -149,13 +161,37 @@ contentArea slice columns 3`,
 
   content: `style "GlassPanel"
 
-background: gradient from #071b2bcc to #0d3a5ccc
 color: #f4fbff
-border: 1 solid #38bdf866
+
+backgroundColor: #071b2bcc
+backgroundImage: gradient from #071b2bcc to #0d3a5ccc
+
+opacity: 1
+
+inline: 1
+inlineColor: #ffffff33
+
+outline: 1
+outlineColor: #38bdf866
+
+shadow: soft
+shadowColor: #00101a99
+
 radius: 18
-shadow: soft #00101a99
+
+font: Inter
+textSize: 15
+textWeight: 600
+textStyle: normal
+textShadow: soft #00101a99
+textAlign: center
+lineHeight: 1.4
+letterSpacing: 0
+
 backdropBlur: 18
-transition: smooth 180`,
+blur: none
+scale: 1
+transitionTime: 180`,
 },
   },
 };

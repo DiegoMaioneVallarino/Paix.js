@@ -23,10 +23,20 @@ export function Button(
         )
       : undefined;
 
+  const className =
+    typeof props.className === "string"
+      ? props.className
+      : "";
+
   return (
     <button
       type="button"
-      className="paix-button"
+      className={[
+        "paix-button",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
       disabled={disabled}
       onClick={onClick}
     >

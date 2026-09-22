@@ -40,27 +40,34 @@ function parseAndValidate(
 
 describe("Paix style validation", () => {
   test("accepts visual properties", () => {
-    const source = `style "GlassPanel"
+  const source = `style "GlassPanel"
 
-background: gradient from blue to white
 color: white
-opacity: 0.9
-border: 1 solid cyan
+backgroundColor: blue
+backgroundImage: gradient from blue to white
+opacity: 1
+
+inline: 1
+inlineColor: cyan
+outline: 2
+outlineColor: blue
+shadow: soft
+shadowColor: black
 radius: 18
-shadow: soft black
-outline: none
 
 font: Inter
 textSize: 16
 textWeight: 600
+textStyle: normal
+textShadow: soft black
 textAlign: center
 lineHeight: 1.4
 letterSpacing: 1
 
-blur: none
 backdropBlur: 18
-transform: scale(1)
-transition: smooth 180`;
+blur: none
+scale: 1
+transitionTime: 180`;
 
     const diagnostics =
       parseAndValidate(source);
@@ -133,10 +140,10 @@ banana: yellow`;
   test("validates conditional blocks", () => {
     const source = `style "ConditionalStyle"
 
-background: blue
+backgroundColor: blue
 
 when _selected:
-    background: cyan
+    backgroundColor: cyan
     padding: 10`;
 
     const diagnostics =

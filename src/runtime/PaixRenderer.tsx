@@ -313,18 +313,53 @@ function RuntimeComponent({
   const NativeComponent =
     componentRegistry.get(component.name);
 
-  const invocationValues = evaluateArguments(
-    component,
-    scope,
-    setState,
-  );
+  const invocationValues =
+    evaluateArguments(
+      component,
+      scope,
+      setState,
+    );
 
   if (NativeComponent) {
+    const directStyleName =
+      getDirectStyleName(component);
+
+    const directStyle =
+      directStyleName
+        ? program.styles[directStyleName]
+        : undefined;
+
+    if (
+      directStyleName &&
+      !directStyle
+    ) {
+      return (
+        <div className="paix-runtime-error">
+          Unknown style: {directStyleName}
+        </div>
+      );
+    }
+
+    const directStyleClasses =
+      directStyle
+        ? resolvePaixStyleClasses(
+            directStyle,
+            scope,
+          )
+        : "";
+
+    const className = mergeClassNames(
+      invocationValues.className,
+      directStyleClasses,
+    );
+
     return (
       <NativeComponent
         {...(
-          invocationValues as PaixRuntimeProps
+          invocationValues as
+            PaixRuntimeProps
         )}
+        className={className}
       />
     );
   }
@@ -510,35 +545,90 @@ function evaluateArguments(
   setState?: PaixStateSetter,
 ): PaixScope {
   return Object.fromEntries(
-    component.arguments.map((argument) => {
-      if (
-        isPaixEventArgument(
-          argument.name,
-        )
-      ) {
+    component.arguments
+      .filter(
+        (argument) =>
+          argument.name !== "style",
+      )
+      .map((argument) => {
+        if (
+          isPaixEventArgument(
+            argument.name,
+          )
+        ) {
+          return [
+            argument.name,
+
+            resolvePaixEvent(
+              argument.value,
+              {
+                scope,
+                setState,
+              },
+            ),
+          ];
+        }
+
         return [
           argument.name,
 
-          resolvePaixEvent(
+          evaluateExpression(
             argument.value,
-            {
-              scope,
-              setState,
-            },
+            scope,
           ),
         ];
-      }
-
-      return [
-        argument.name,
-        evaluateExpression(
-          argument.value,
-          scope,
-        ),
-      ];
-    }),
+      }),
   );
 }
+function getDirectStyleName(
+  component: PaixComponentNode,
+): string | undefined {
+  const styleArgument =
+    component.arguments.find(
+      (argument) =>
+        argument.name === "style",
+    );
+
+  if (!styleArgument) {
+    return undefined;
+  }
+
+  const value = styleArgument.value;
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (
+    value &&
+    typeof value === "object" &&
+    value.type === "Reference"
+  ) {
+    return value.name;
+  }
+
+  return undefined;
+}
+
+function mergeClassNames(
+  currentClassName: unknown,
+  styleClasses: string,
+): string {
+  const current =
+    typeof currentClassName === "string"
+      ? currentClassName
+      : "";
+
+  return [
+    current,
+    styleClasses,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+
+
 
 function getTargetAreaName(
   target: PaixPlacementNode["target"],

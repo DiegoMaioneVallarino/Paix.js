@@ -526,7 +526,9 @@ private stack = this.RULE("stack", () => {
     },
   );
 
-  private argument = this.RULE("argument", () => {
+  private argument = this.RULE(
+  "argument",
+  () => {
     this.OR([
       {
         ALT: () =>
@@ -540,11 +542,18 @@ private stack = this.RULE("stack", () => {
             LABEL: "argumentName",
           }),
       },
+      {
+        ALT: () =>
+          this.CONSUME(StyleKeyword, {
+            LABEL: "argumentName",
+          }),
+      },
     ]);
 
     this.CONSUME(Colon);
     this.SUBRULE(this.expression);
-  });
+  },
+);
 
   private expression = this.RULE(
   "expression",

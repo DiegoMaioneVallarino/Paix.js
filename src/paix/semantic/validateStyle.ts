@@ -9,24 +9,36 @@ import type {
 
 const allowedProperties = new Set<string>([
   "color",
-  "background",
+
+  "backgroundColor",
+  "backgroundImage",
+
   "opacity",
-  "border",
-  "radius",
-  "shadow",
+
+  "inline",
+  "inlineColor",
+
   "outline",
+  "outlineColor",
+
+  "shadow",
+  "shadowColor",
+
+  "radius",
 
   "font",
   "textSize",
   "textWeight",
+  "textStyle",
+  "textShadow",
   "textAlign",
   "lineHeight",
   "letterSpacing",
 
-  "blur",
   "backdropBlur",
-  "transform",
-  "transition",
+  "blur",
+  "scale",
+  "transitionTime",
 ]);
 
 const geometryProperties = new Set<string>([
@@ -75,6 +87,8 @@ const geometryProperties = new Set<string>([
   "right",
   "bottom",
   "left",
+  "border",
+    "borderColor",
 ]);
 
 interface SourcePosition {
