@@ -5,8 +5,10 @@ import { DiagnosticsPanel } from "../features/diagnostics/DiagnosticsPanel";
 import { FileExplorer } from "../features/file-explorer/FileExplorer";
 import { PreviewPanel } from "../features/preview/PreviewPanel";
 
-import type { PaixWireframeNode } from "../paix/ast/ast.types";
-import { compilePaixProject } from "../paix/compiler/compile";
+import type {
+  PaixComponentDefinitionNode,
+  PaixWireframeNode,
+} from "../paix/ast/ast.types";import { compilePaixProject } from "../paix/compiler/compile";
 import { parsePaixPage } from "../paix/parser/parse";
 import { parsePaixComponent } from "../paix/parser/parseComponent";
 import { parsePaixWireframe } from "../paix/parser/parseWireframe";
@@ -148,6 +150,16 @@ if (activeFile.type === "style") {
       ? activeAnalysis.ast
       : null;
 
+
+const inspectedComponent:
+  PaixComponentDefinitionNode | null =
+    activeFile?.type === "component" &&
+    activeAnalysis.ast?.type ===
+      "ComponentDefinition"
+      ? activeAnalysis.ast
+      : null;
+
+
   if (!activeFile) {
     return (
       <section className="workbench">
@@ -254,12 +266,12 @@ if (activeFile.type === "style") {
           />
         </section>
 
-        <PreviewPanel
-          program={compiledProject}
-          inspectedWireframe={
-            inspectedWireframe
-          }
-        />
+       <PreviewPanel
+  program={compiledProject}
+  activeFileType={activeFile.type}
+  inspectedWireframe={inspectedWireframe}
+  inspectedComponent={inspectedComponent}
+/>
       </div>
 
       <DiagnosticsPanel

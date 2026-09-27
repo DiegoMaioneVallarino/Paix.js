@@ -62,27 +62,18 @@ actionsArea slice columns 2`,
       path: "pages/home.paix",
       type: "page",
 
-      content: `page "home" MainFrame
+      content: `page "home" CardsFrame
 
-headerArea >
-    Text(
-        value: "Hello Paix",
-        style: GlassPanel
-    )
-
-contentArea.slots > [
-    Button(
-        label: "Home",
-        style: GlassPanel
-    ),
-    Button(
-        label: "Catalogue",
-        style: GlassPanel
-    ),
-    Button(
-        label: "Contact",
-        style: GlassPanel
-    )
+main.slots > [
+    Card(title: "Aurora", category: "women"),
+    Card(title: "Atlas", category: "men"),
+    Card(title: "Nova", category: "women"),
+    Card(title: "Orion", category: "men"),
+    Card(title: "Vega", category: "women"),
+    Card(title: "Solar", category: "men"),
+    Card(title: "Luna", category: "women"),
+    Card(title: "Cosmos", category: "men"),
+    Card(title: "Eclipse", category: "women")
 ]`,
     },
 

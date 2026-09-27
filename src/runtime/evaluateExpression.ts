@@ -52,6 +52,27 @@ export function evaluateExpression(
         : value;
     }
 
+    case "ComparisonExpression": {
+      const left = evaluateExpression(
+        expression.left,
+        scope,
+      );
+
+      const right = evaluateExpression(
+        expression.right,
+        scope,
+      );
+
+      if (
+        left === undefined ||
+        right === undefined
+      ) {
+        return false;
+      }
+
+      return left === right;
+    }
+
     case "BinaryExpression": {
       const left = evaluateExpression(
         expression.left,

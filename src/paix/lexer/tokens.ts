@@ -206,6 +206,11 @@ export const HexColorLiteral = createToken({
   pattern: /#[0-9a-fA-F]{3,8}\b/,
 });
 
+export const IsKeyword = createToken({
+  name: "IsKeyword",
+  pattern: /is\b/,
+});
+
 export const allTokens: TokenType[] = [
   WhiteSpace,
   Comment,
@@ -227,9 +232,10 @@ export const allTokens: TokenType[] = [
   CenteredKeyword,
   IslandKeyword,
   LayerKeyword,
-
+  
   WhenKeyword,
   OtherwiseKeyword,
+  IsKeyword,
 
   TrueKeyword,
   FalseKeyword,

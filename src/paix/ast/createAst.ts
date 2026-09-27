@@ -7,7 +7,6 @@ import { paixParser } from "../parser/grammar";
 
 import type {
   PaixArgumentNode,
-  PaixBinaryExpressionNode,
   PaixCallExpressionNode,
   PaixComponentNode,
   PaixExpressionNode,
@@ -23,7 +22,6 @@ PaixSizeNode,
 PaixSliceNode,
 PaixWireframeNode,
 PaixInputReferenceNode,
-PaixOtherwiseExpressionNode,
 PaixStyleNode,
 PaixStylePropertyNode,
 PaixStyleConditionNode,
@@ -506,11 +504,58 @@ public stack(ctx: CstChildren): PaixStackNode {
     };
   }
 
- public expression(
+public expression(
+  ctx: CstChildren,
+): PaixExpressionNode {
+  const value = this.visit(
+    ctx.value[0] as CstNode,
+  ) as PaixExpressionNode;
+
+  const fallbackNode =
+    ctx.fallback?.[0] as CstNode | undefined;
+
+  if (!fallbackNode) {
+    return value;
+  }
+
+  return {
+    type: "OtherwiseExpression",
+    value,
+    fallback: this.visit(
+      fallbackNode,
+    ) as PaixExpressionNode,
+  };
+}
+
+public comparisonExpression(
+  ctx: CstChildren,
+): PaixExpressionNode {
+  const left = this.visit(
+    ctx.left[0] as CstNode,
+  ) as PaixExpressionNode;
+
+  const rightNode =
+    ctx.right?.[0] as CstNode | undefined;
+
+  if (!rightNode) {
+    return left;
+  }
+
+  return {
+    type: "ComparisonExpression",
+    operator: "is",
+    left,
+    right: this.visit(
+      rightNode,
+    ) as PaixExpressionNode,
+  };
+}
+
+public additiveExpression(
   ctx: CstChildren,
 ): PaixExpressionNode {
   const operands =
-    (ctx.operand ?? []) as CstNode[];
+    ctx.operand as CstNode[];
 
   const operators =
     (ctx.operator ?? []) as IToken[];
@@ -524,38 +569,14 @@ public stack(ctx: CstChildren): PaixStackNode {
     index < operators.length;
     index += 1
   ) {
-    const operator = operators[index].image as
-      | "+"
-      | "-";
-
-    const right = this.visit(
-      operands[index + 1],
-    ) as PaixExpressionNode;
-
-    const binaryExpression: PaixBinaryExpressionNode = {
+    result = {
       type: "BinaryExpression",
-      operator,
+      operator: operators[index].image as "+" | "-",
       left: result,
-      right,
+      right: this.visit(
+        operands[index + 1],
+      ) as PaixExpressionNode,
     };
-
-    result = binaryExpression;
-  }
-
-  const fallbackNode =
-    ctx.fallback?.[0] as CstNode | undefined;
-
-  if (fallbackNode) {
-    const otherwiseExpression:
-      PaixOtherwiseExpressionNode = {
-        type: "OtherwiseExpression",
-        value: result,
-        fallback: this.visit(
-          fallbackNode,
-        ) as PaixExpressionNode,
-      };
-
-    return otherwiseExpression;
   }
 
   return result;

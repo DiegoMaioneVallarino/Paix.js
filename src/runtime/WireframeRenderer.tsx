@@ -140,43 +140,60 @@ function WireframeArea({
   const nextAncestors = new Set(ancestors);
   nextAncestors.add(name);
 
-  if (slice.mode === "island") {
-    const childName =
-      slice.areas[0] ?? `${name}.island`;
+ if (slice.mode === "island") {
+  const childName =
+    slice.areas[0] ?? `${name}.island`;
 
-    const childIsSlot =
-      slice.areas.length === 0;
+  const childIsSlot =
+    slice.areas.length === 0;
 
-    return (
-      <div
-        className="paix-wireframe-area"
-        style={style}
-        data-paix-area={name}
-      >
-        {debug && <AreaLabel name={name} />}
+  const islandInset =
+    sizeToCss(slice.size);
 
-        <WireframeArea
-          name={childName}
-          slices={slices}
-          debug={debug}
-          ancestors={nextAncestors}
-          slot={childIsSlot}
-          slotOwner={
-            childIsSlot
-              ? slice.target.path
-              : undefined
-          }
-          slotIndex={0}
-          renderArea={renderArea}
-          renderSlot={renderSlot}
-          style={{
-            position: "absolute",
-            inset: sizeToCss(slice.size),
-          }}
-        />
-      </div>
-    );
-  }
+  return (
+    <div
+      className="paix-wireframe-area"
+      style={{
+        ...style,
+
+        position:
+          style?.position ?? "relative",
+      }}
+      data-paix-area={name}
+    >
+      {debug && (
+        <AreaLabel name={name} />
+      )}
+
+      <WireframeArea
+        name={childName}
+        slices={slices}
+        debug={debug}
+        ancestors={nextAncestors}
+        slot={childIsSlot}
+        slotOwner={
+          childIsSlot
+            ? slice.target.path
+            : undefined
+        }
+        slotIndex={0}
+        renderArea={renderArea}
+        renderSlot={renderSlot}
+        style={{
+          position: "absolute",
+
+          top: islandInset,
+          right: islandInset,
+          bottom: islandInset,
+          left: islandInset,
+
+          width: "auto",
+          height: "auto",
+        }}
+      />
+    </div>
+  );
+}
 
   if (slice.mode === "layer") {
     const children = createChildNames(slice);

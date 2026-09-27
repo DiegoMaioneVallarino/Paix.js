@@ -44,6 +44,7 @@ OtherwiseKeyword,
 StyleKeyword,
 WhenKeyword,
 HexColorLiteral,
+IsKeyword
 } from "../lexer/tokens";
 
 export class PaixParser extends CstParser {
@@ -555,8 +556,42 @@ private stack = this.RULE("stack", () => {
   },
 );
 
-  private expression = this.RULE(
+private expression = this.RULE(
   "expression",
+  () => {
+    this.SUBRULE(this.comparisonExpression, {
+      LABEL: "value",
+    });
+
+    this.OPTION(() => {
+      this.CONSUME(OtherwiseKeyword);
+
+      this.SUBRULE(this.expression, {
+        LABEL: "fallback",
+      });
+    });
+  },
+);
+
+private comparisonExpression = this.RULE(
+  "comparisonExpression",
+  () => {
+    this.SUBRULE(this.additiveExpression, {
+      LABEL: "left",
+    });
+
+    this.OPTION(() => {
+      this.CONSUME(IsKeyword);
+
+      this.SUBRULE2(this.additiveExpression, {
+        LABEL: "right",
+      });
+    });
+  },
+);
+
+private additiveExpression = this.RULE(
+  "additiveExpression",
   () => {
     this.SUBRULE(this.primary, {
       LABEL: "operand",
@@ -580,14 +615,6 @@ private stack = this.RULE("stack", () => {
 
       this.SUBRULE2(this.primary, {
         LABEL: "operand",
-      });
-    });
-
-    this.OPTION(() => {
-      this.CONSUME(OtherwiseKeyword);
-
-      this.SUBRULE(this.expression, {
-        LABEL: "fallback",
       });
     });
   },

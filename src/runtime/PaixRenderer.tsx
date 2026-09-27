@@ -144,6 +144,7 @@ interface ScopedWireframeProps {
   scope: PaixScope;
   stack: string[];
   setState?: PaixStateSetter;
+  debug?: boolean;
 }
 
 function ScopedWireframe({
@@ -153,6 +154,7 @@ function ScopedWireframe({
   scope,
   stack,
   setState,
+  debug = false,
 }: ScopedWireframeProps) {
   const renderArea = (
     areaName: string,
@@ -218,13 +220,14 @@ function ScopedWireframe({
     );
   };
 
-  return (
-    <WireframeRenderer
-      wireframe={wireframe}
-      renderArea={renderArea}
-      renderSlot={renderSlot}
-    />
-  );
+ return (
+  <WireframeRenderer
+    wireframe={wireframe}
+    debug={debug}
+    renderArea={renderArea}
+    renderSlot={renderSlot}
+  />
+);
 }
 
 interface PlacementContentProps {
@@ -310,8 +313,8 @@ function RuntimeComponent({
   stack,
   setState,
 }: RuntimeComponentProps) {
-  const NativeComponent =
-    componentRegistry.get(component.name);
+  const directStyleName =
+    getDirectStyleName(component);
 
   const invocationValues =
     evaluateArguments(
@@ -320,10 +323,10 @@ function RuntimeComponent({
       setState,
     );
 
-  if (NativeComponent) {
-    const directStyleName =
-      getDirectStyleName(component);
+  const NativeComponent =
+    componentRegistry.get(component.name);
 
+  if (NativeComponent) {
     const directStyle =
       directStyleName
         ? program.styles[directStyleName]
@@ -388,6 +391,9 @@ function RuntimeComponent({
     <UserDefinedComponent
       definition={definition}
       suppliedValues={invocationValues}
+      invocationStyleName={
+        directStyleName
+      }
       program={program}
       stack={[
         ...stack,
@@ -400,15 +406,18 @@ function RuntimeComponent({
 interface UserDefinedComponentProps {
   definition: PaixComponentDefinitionNode;
   suppliedValues: PaixScope;
+  invocationStyleName?: string;
   program: PaixCompiledProject;
   stack: string[];
+  debug?: boolean;
 }
-
 function UserDefinedComponent({
   definition,
   suppliedValues,
+  invocationStyleName,
   program,
   stack,
+  debug = false,
 }: UserDefinedComponentProps) {
   const resolvedInputs =
     resolveComponentInputs(
@@ -454,17 +463,38 @@ function UserDefinedComponent({
     );
   }
 
+  /*
+   * El estilo proporcionado al invocar
+   * el componente reemplaza el estilo
+   * predeterminado de su definición.
+   */
+  const resolvedStyleName =
+    invocationStyleName ??
+    definition.style;
+
   const styleDefinition =
-    definition.style
-      ? program.styles[definition.style]
+    resolvedStyleName
+      ? program.styles[resolvedStyleName]
       : undefined;
 
-  const styleClasses = styleDefinition
-    ? resolvePaixStyleClasses(
-        styleDefinition,
-        localScope,
-      )
-    : "";
+  if (
+    resolvedStyleName &&
+    !styleDefinition
+  ) {
+    return (
+      <div className="paix-runtime-error">
+        Unknown style: {resolvedStyleName}
+      </div>
+    );
+  }
+
+  const styleClasses =
+    styleDefinition
+      ? resolvePaixStyleClasses(
+          styleDefinition,
+          localScope,
+        )
+      : "";
 
   return (
     <div
@@ -481,23 +511,45 @@ function UserDefinedComponent({
         definition.wireframe
       }
       data-paix-style={
-        definition.style ?? undefined
+        resolvedStyleName
       }
     >
       <ScopedWireframe
-        wireframe={wireframe}
-        placements={
-          definition.placements
-        }
+  wireframe={wireframe}
+  placements={definition.placements}
+  program={program}
+  scope={localScope}
+  stack={stack}
+  setState={setState}
+  debug={debug}
+/>
+    </div>
+  );
+}
+interface PaixComponentPreviewProps {
+  definition: PaixComponentDefinitionNode;
+  program: PaixCompiledProject;
+}
+
+export function PaixComponentPreview({
+  definition,
+  program,
+}: PaixComponentPreviewProps) {
+  return (
+    <div className="paix-page">
+      <PaixStyleSheet styles={program.styles} />
+
+      <UserDefinedComponent
+        key={definition.name}
+        definition={definition}
+        suppliedValues={{}}
         program={program}
-        scope={localScope}
-        stack={stack}
-        setState={setState}
+        stack={[definition.name]}
+        debug
       />
     </div>
   );
 }
-
 function resolveComponentInputs(
   definition: PaixComponentDefinitionNode,
   suppliedValues: PaixScope,

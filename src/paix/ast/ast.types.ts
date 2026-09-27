@@ -40,7 +40,8 @@ export type PaixExpressionNode =
   | PaixInputReferenceNode
   | PaixCallExpressionNode
   | PaixBinaryExpressionNode
-  | PaixOtherwiseExpressionNode;
+  | PaixOtherwiseExpressionNode
+  | PaixComparisonExpressionNode;
 
 export interface PaixArgumentNode {
   type: "Argument";
@@ -152,6 +153,13 @@ export interface PaixSizedSliceNode
     | "island";
 
   size: PaixSizeNode;
+}
+
+export interface PaixComparisonExpressionNode {
+  type: "ComparisonExpression";
+  operator: "is";
+  left: PaixExpressionNode;
+  right: PaixExpressionNode;
 }
 
 export interface PaixRepeatedSliceNode
