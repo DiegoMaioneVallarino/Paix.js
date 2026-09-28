@@ -23,6 +23,7 @@ const allowedProperties = new Set<string>([
 
   "shadow",
   "shadowColor",
+  "shadowBlur",
 
   "radius",
 
@@ -88,7 +89,7 @@ const geometryProperties = new Set<string>([
   "bottom",
   "left",
   "border",
-    "borderColor",
+  "borderColor",
 ]);
 
 interface SourcePosition {
@@ -185,6 +186,25 @@ function validateProperties(
           `Unknown Paix style property ` +
           `"${property.name}".`,
 
+        line: position.line,
+        column: position.column,
+        length: property.name.length,
+      });
+
+      continue;
+    }
+
+    if (
+      property.name === "shadowBlur" &&
+      !/^(?:\d+(?:\.\d+)?)(?:px)?$/.test(
+        property.value.trim(),
+      )
+    ) {
+      diagnostics.push({
+        source: "semantic",
+        severity: "error",
+        message:
+          '"shadowBlur" must be a non-negative number, optionally followed by "px".',
         line: position.line,
         column: position.column,
         length: property.name.length,
