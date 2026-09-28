@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import type {
   PaixComponentDefinitionNode,
+  PaixStyleNode,
   PaixWireframeNode,
 } from "../../paix/ast/ast.types";
 
@@ -18,6 +19,8 @@ import {
   PaixRenderer,
 } from "../../runtime/PaixRenderer";
 
+import { PaixStylePreview } from "../../runtime/PaixStylePreview";
+
 import {
   WireframeRenderer,
 } from "../../runtime/WireframeRenderer";
@@ -28,8 +31,8 @@ interface PreviewPanelProps {
   program: PaixCompiledProject;
   activeFileType: PaixFileType;
   inspectedWireframe: PaixWireframeNode | null;
-  inspectedComponent:
-    PaixComponentDefinitionNode | null;
+  inspectedComponent: PaixComponentDefinitionNode | null;
+  inspectedStyle: PaixStyleNode | null;
 }
 
 export function PreviewPanel({
@@ -37,9 +40,9 @@ export function PreviewPanel({
   activeFileType,
   inspectedWireframe,
   inspectedComponent,
+  inspectedStyle,
 }: PreviewPanelProps) {
-  const [device, setDevice] =
-    useState<PreviewDevice>("desktop");
+  const [device, setDevice] = useState<PreviewDevice>("desktop");
 
   let content;
 
@@ -67,10 +70,20 @@ export function PreviewPanel({
         para ver su preview.
       </div>
     );
-  } else {
-    content = (
-      <PaixRenderer program={program} />
+  } else if (activeFileType === "style") {
+    content = inspectedStyle ? (
+      <PaixStylePreview
+        program={program}
+        style={inspectedStyle}
+      />
+    ) : (
+      <div className="paix-runtime-empty">
+        Corrige los errores del estilo
+        para ver su preview.
+      </div>
     );
+  } else {
+    content = <PaixRenderer program={program} />;
   }
 
   return (
@@ -81,28 +94,16 @@ export function PreviewPanel({
         <div className="preview-controls">
           <button
             type="button"
-            className={`device-button ${
-              device === "desktop"
-                ? "active"
-                : ""
-            }`}
-            onClick={() =>
-              setDevice("desktop")
-            }
+            className={`device-button ${device === "desktop" ? "active" : ""}`}
+            onClick={() => setDevice("desktop")}
           >
             Desktop
           </button>
 
           <button
             type="button"
-            className={`device-button ${
-              device === "mobile"
-                ? "active"
-                : ""
-            }`}
-            onClick={() =>
-              setDevice("mobile")
-            }
+            className={`device-button ${device === "mobile" ? "active" : ""}`}
+            onClick={() => setDevice("mobile")}
           >
             Mobile
           </button>
@@ -110,9 +111,7 @@ export function PreviewPanel({
       </div>
 
       <div className="preview-background">
-        <div
-          className={`preview-canvas preview-${device}`}
-        >
+        <div className={`preview-canvas preview-${device}`}>
           {content}
         </div>
       </div>

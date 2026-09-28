@@ -4,7 +4,7 @@ import { CodeEditor } from "../features/code-editor/CodeEditor";
 import { DiagnosticsPanel } from "../features/diagnostics/DiagnosticsPanel";
 import { FileExplorer } from "../features/file-explorer/FileExplorer";
 import { PreviewPanel } from "../features/preview/PreviewPanel";
-
+import { parsePaixStyle } from "../paix/parser/parseStyle";
 import type {
   PaixComponentDefinitionNode,
   PaixWireframeNode,
@@ -18,7 +18,6 @@ import { useProjectStore } from "../project/project.store";
 import { FileTypeIcon } from "../features/file-explorer/FileTypeIcon";
 
 import { validatePaixWireframe } from "../paix/semantic/validateWireframe";
-import { parsePaixStyle } from "../paix/parser/parseStyle";
 
 import {
   validatePaixStyle,
@@ -47,6 +46,13 @@ export function Workbench() {
 
   const activeFile =
     project.files[activeFilePath];
+
+
+const inspectedStyle =
+  activeFile?.type === "style"
+    ? parsePaixStyle(activeFile.content).ast
+    : null;
+
 
   const activeFileIsModified =
     modifiedFiles.includes(activeFilePath);
@@ -271,6 +277,7 @@ const inspectedComponent:
   activeFileType={activeFile.type}
   inspectedWireframe={inspectedWireframe}
   inspectedComponent={inspectedComponent}
+  inspectedStyle={inspectedStyle}
 />
       </div>
 

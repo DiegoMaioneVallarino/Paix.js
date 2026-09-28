@@ -82,6 +82,48 @@ export function installStyleNumberDrag(
   if (!ownerWindow) return () => {};
 
   let cancelDrag: (() => void) | null = null;
+  let hoveredElement: HTMLElement | null = null;
+  let previousHoverCursor = "";
+  let previousHoverPriority = "";
+
+  const clearHover = () => {
+    if (!hoveredElement) return;
+    if (previousHoverCursor) {
+      hoveredElement.style.setProperty(
+        "cursor", previousHoverCursor, previousHoverPriority,
+      );
+    } else {
+      hoveredElement.style.removeProperty("cursor");
+    }
+    hoveredElement = null;
+  };
+
+  const onHover = (event: PointerEvent) => {
+    if (cancelDrag) return;
+
+    const model = editor.getModel();
+    const position = editor.getTargetAtClientPoint(
+      event.clientX, event.clientY,
+    )?.position;
+    const candidate = event.target;
+    const isDraggable = isStyleFile() && model && position &&
+      getStyleNumberAtColumn(
+        model.getLineContent(position.lineNumber),
+        position.column,
+      );
+
+    const element = isDraggable && candidate instanceof HTMLElement
+      ? candidate
+      : null;
+    if (hoveredElement === element) return;
+
+    clearHover();
+    if (!element) return;
+    hoveredElement = element;
+    previousHoverCursor = element.style.getPropertyValue("cursor");
+    previousHoverPriority = element.style.getPropertyPriority("cursor");
+    element.style.setProperty("cursor", "ew-resize", "important");
+  };
 
   const onPointerDown = (event: PointerEvent) => {
     if (
@@ -104,6 +146,7 @@ export function installStyleNumberDrag(
     event.preventDefault();
     event.stopPropagation();
     cancelDrag?.();
+    clearHover();
 
     const startX = event.clientX;
     const pointerId = event.pointerId;
@@ -186,8 +229,13 @@ export function installStyleNumberDrag(
   };
 
   root.addEventListener("pointerdown", onPointerDown, true);
+  root.addEventListener("pointermove", onHover, true);
+  root.addEventListener("pointerleave", clearHover, true);
   return () => {
     cancelDrag?.();
+    clearHover();
     root.removeEventListener("pointerdown", onPointerDown, true);
+    root.removeEventListener("pointermove", onHover, true);
+    root.removeEventListener("pointerleave", clearHover, true);
   };
 }
