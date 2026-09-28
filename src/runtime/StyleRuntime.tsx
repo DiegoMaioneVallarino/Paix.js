@@ -14,7 +14,12 @@ interface PaixStyleSheetProps {
 
 export function PaixStyleSheet({ styles }: PaixStyleSheetProps) {
   const css = Object.values(styles).map(compileStyle).join("\n");
-  return css ? <style data-paix-style-sheet>{css}</style> : null;
+  if (!css) return null;
+
+  // El texto tiene su propia capa para conservar el fondo de la superficie.
+  const textRule = `.paix-text-content,.paix-button-label{background-image:var(--paix-text-gradient,none);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:var(--paix-text-fill,currentColor);}`;
+
+  return <style data-paix-style-sheet>{`${textRule}\n${css}`}</style>;
 }
 
 export function resolvePaixStyleClasses(
@@ -70,7 +75,10 @@ function compileProperty(property: PaixStylePropertyNode): string {
 
   switch (property.name) {
     case "color":
-      return `color:${value};`;
+      if (isGradient(value)) {
+        return `color:transparent;--paix-text-gradient:${normalizeBackgroundImage(value)};--paix-text-fill:transparent;`;
+      }
+      return `color:${value};--paix-text-gradient:none;--paix-text-fill:currentColor;`;
     case "backgroundColor":
       return `background-color:${value};`;
     case "backgroundImage":
@@ -133,6 +141,11 @@ function normalizeRingWidth(value: string): string {
 
 function normalizePaint(value: string): string {
   return value === "none" ? "transparent" : normalizeBackgroundImage(value);
+}
+
+function isGradient(value: string): boolean {
+  return /^(?:radial\s+)?gradient\s/.test(value) ||
+    /^(?:repeating-)?(?:linear|radial|conic)-gradient\s*\(/.test(value);
 }
 
 function normalizeBoxShadow(value: string): string {
