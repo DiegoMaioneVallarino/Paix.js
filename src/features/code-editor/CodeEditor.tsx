@@ -9,6 +9,7 @@ import Editor, {
 import type { PaixDiagnostic } from "../../paix/diagnostics/diagnostic.types";
 import { registerPaixLanguage } from "./paixLanguage";
 import { registerPaixTheme } from "./paixTheme";
+import { installStyleNumberDrag } from "./styleNumberDrag";
 
 interface CodeEditorProps {
   path: string;
@@ -24,6 +25,9 @@ export function CodeEditor({
   onChange,
 }: CodeEditorProps) {
   const monacoRef = useRef<Monaco | null>(null);
+  const pathRef = useRef(path);
+  const dragCleanupRef = useRef<(() => void) | null>(null);
+  pathRef.current = path;
 
   const handleBeforeMount: BeforeMount = (monaco) => {
     registerPaixLanguage(monaco);
@@ -34,46 +38,44 @@ export function CodeEditor({
     const uri = monaco.Uri.parse(`file:///${path}`);
     const model = monaco.editor.getModel(uri);
 
-    if (!model) {
-      return;
-    }
+    if (!model) return;
 
     monaco.editor.setModelMarkers(
       model,
       "paix-parser",
       diagnostics.map((diagnostic) => ({
-        severity:
-          diagnostic.severity === "error"
-            ? monaco.MarkerSeverity.Error
-            : monaco.MarkerSeverity.Warning,
-
+        severity: diagnostic.severity === "error"
+          ? monaco.MarkerSeverity.Error
+          : monaco.MarkerSeverity.Warning,
         message: diagnostic.message,
-
         startLineNumber: diagnostic.line,
         startColumn: diagnostic.column,
-
         endLineNumber: diagnostic.line,
-        endColumn:
-          diagnostic.column +
-          Math.max(diagnostic.length, 1),
+        endColumn: diagnostic.column + Math.max(diagnostic.length, 1),
       })),
     );
   };
 
-  const handleMount: OnMount = (_editor, monaco) => {
+  const handleMount: OnMount = (editor, monaco) => {
     monacoRef.current = monaco;
     applyMarkers(monaco);
+
+    dragCleanupRef.current?.();
+    dragCleanupRef.current = installStyleNumberDrag(
+      editor,
+      () => pathRef.current.replace(/\\/g, "/").startsWith("styles/"),
+    );
   };
 
   useEffect(() => {
     const monaco = monacoRef.current;
-
-    if (!monaco) {
-      return;
-    }
-
-    applyMarkers(monaco);
+    if (monaco) applyMarkers(monaco);
   }, [path, diagnostics]);
+
+  useEffect(() => () => {
+    dragCleanupRef.current?.();
+    dragCleanupRef.current = null;
+  }, []);
 
   return (
     <div className="code-editor">
@@ -90,37 +92,20 @@ export function CodeEditor({
         saveViewState
         options={{
           automaticLayout: true,
-
-          minimap: {
-            enabled: false,
-          },
-
+          minimap: { enabled: false },
           fontFamily:
             '"Cascadia Code", "SFMono-Regular", Consolas, monospace',
           fontSize: 13,
           lineHeight: 23,
           fontLigatures: true,
-
-          padding: {
-            top: 18,
-            bottom: 18,
-          },
-
+          padding: { top: 18, bottom: 18 },
           scrollBeyondLastLine: false,
           smoothScrolling: true,
           cursorSmoothCaretAnimation: "on",
           cursorBlinking: "smooth",
           renderLineHighlight: "line",
-
-          bracketPairColorization: {
-            enabled: true,
-          },
-
-          guides: {
-            bracketPairs: true,
-            indentation: true,
-          },
-
+          bracketPairColorization: { enabled: true },
+          guides: { bracketPairs: true, indentation: true },
           tabSize: 4,
           insertSpaces: true,
           wordWrap: "on",
