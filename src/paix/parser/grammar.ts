@@ -367,9 +367,16 @@ private sliceDeclaration = this.RULE(
       LABEL: "target",
     });
 
+    this.OPTION4(() => {
+      this.SUBRULE(this.sliceCondition);
+    });
+
     this.CONSUME(SliceKeyword);
 
     this.OR([
+      // Aquí siguen tus alternativas existentes:
+      // vertical, horizontal, columns, rows,
+      // grid, island y layer.
       {
         ALT: () => {
           this.CONSUME(VerticalKeyword);
@@ -445,7 +452,28 @@ private sliceDeclaration = this.RULE(
   },
 );
 
+private sliceCondition = this.RULE(
+  "sliceCondition",
+  () => {
+    this.CONSUME(WhenKeyword);
 
+    this.CONSUME(Identifier, {
+      LABEL: "leftDimension",
+    });
+
+    this.CONSUME2(Identifier, {
+      LABEL: "comparison",
+    });
+
+    this.CONSUME3(Identifier, {
+      LABEL: "thanWord",
+    });
+
+    this.CONSUME4(Identifier, {
+      LABEL: "rightDimension",
+    });
+  },
+);
 
 private sizeValue = this.RULE("sizeValue", () => {
   this.OR([

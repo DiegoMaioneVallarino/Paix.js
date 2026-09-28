@@ -141,7 +141,16 @@ interface PaixSliceBaseNode {
   type: "Slice";
   target: PaixAreaReferenceNode;
   areas: string[];
+  condition?: PaixSliceConditionNode;
 }
+
+export interface PaixSliceConditionNode {
+  left: string;
+  operator: string;
+  than: string;
+  right: string;
+}
+
 
 export interface PaixSizedSliceNode
   extends PaixSliceBaseNode {

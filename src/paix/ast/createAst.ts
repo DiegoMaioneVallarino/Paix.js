@@ -20,11 +20,13 @@ PaixAreaReferenceNode,
 PaixStackNode,
 PaixSizeNode,
 PaixSliceNode,
+PaixSliceConditionNode,
 PaixWireframeNode,
 PaixInputReferenceNode,
 PaixStyleNode,
 PaixStylePropertyNode,
 PaixStyleConditionNode,
+
 } from "./ast.types";
 
 type CstChildren = CstNode["children"];
@@ -44,6 +46,28 @@ public componentStyleSection(
     ctx.styleName?.[0] as IToken;
 
   return styleName.image;
+}
+
+public sliceCondition(
+  ctx: CstChildren,
+): PaixSliceConditionNode {
+  return {
+    left: (
+      ctx.leftDimension?.[0] as IToken
+    ).image,
+
+    operator: (
+      ctx.comparison?.[0] as IToken
+    ).image,
+
+    than: (
+      ctx.thanWord?.[0] as IToken
+    ).image,
+
+    right: (
+      ctx.rightDimension?.[0] as IToken
+    ).image,
+  };
 }
 
 public style(ctx: CstChildren): PaixStyleNode {
@@ -174,6 +198,24 @@ public sliceDeclaration(
     targetNode,
   ) as PaixAreaReferenceNode;
 
+
+const conditionNode =
+  ctx.sliceCondition?.[0] as
+    | CstNode
+    | undefined;
+
+const condition = conditionNode
+  ? (this.visit(
+      conditionNode,
+    ) as PaixSliceConditionNode)
+  : undefined;
+
+const conditionFields = condition
+  ? { condition }
+  : {};
+
+
+
   const areas = (
     (ctx.areaName ?? []) as IToken[]
   ).map((token) => parseString(token.image));
@@ -192,6 +234,7 @@ public sliceDeclaration(
       ) as PaixSizeNode,
 
       areas,
+      ...conditionFields,
     };
   }
 
@@ -209,6 +252,7 @@ public sliceDeclaration(
       ) as PaixSizeNode,
 
       areas,
+      ...conditionFields,
     };
   }
 
@@ -226,6 +270,7 @@ public sliceDeclaration(
 
       count: Number(countToken.image),
       areas,
+      ...conditionFields,
     };
   }
 
@@ -244,6 +289,7 @@ public sliceDeclaration(
       columns,
       rows,
       areas,
+      ...conditionFields,
     };
   }
 
@@ -258,6 +304,7 @@ public sliceDeclaration(
       ) as PaixSizeNode,
 
       areas,
+      ...conditionFields,
     };
   }
 
@@ -270,8 +317,12 @@ public sliceDeclaration(
     mode: "layer",
     count: Number(countToken.image),
     areas,
+    ...conditionFields,
   };
 }
+
+
+
 
 public sizeValue(
   ctx: CstChildren,

@@ -1,6 +1,9 @@
-import type {
-  CSSProperties,
-  ReactNode,
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
 } from "react";
 
 import type {
@@ -24,7 +27,7 @@ interface WireframeRendererProps {
 
 interface WireframeAreaProps {
   name: string;
-  slices: Map<string, PaixSliceNode>;
+  slices: Map<string, PaixSliceNode[]>;
   debug: boolean;
   ancestors: Set<string>;
   slot?: boolean;
@@ -48,12 +51,22 @@ export function WireframeRenderer({
   renderArea,
   renderSlot,
 }: WireframeRendererProps) {
-  const slices = new Map(
-    wireframe.slices.map((slice) => [
-      slice.target.path,
-      slice,
-    ]),
+const slices = new Map<
+  string,
+  PaixSliceNode[]
+>();
+
+for (const slice of wireframe.slices) {
+  const rules =
+    slices.get(slice.target.path) ?? [];
+
+  rules.push(slice);
+
+  slices.set(
+    slice.target.path,
+    rules,
   );
+}
 
   return (
     <div
@@ -88,6 +101,68 @@ function WireframeArea({
   renderArea,
   renderSlot,
 }: WireframeAreaProps) {
+
+    const areaRef =
+    useRef<HTMLDivElement>(null);
+
+  const [dimensions, setDimensions] =
+    useState<{
+      width: number;
+      height: number;
+    } | null>(null);
+
+  useEffect(() => {
+    const element = areaRef.current;
+
+    if (!element) {
+      return;
+    }
+
+    const update = (
+      width: number,
+      height: number,
+    ) => {
+      setDimensions((previous) => {
+        if (
+          previous?.width === width &&
+          previous?.height === height
+        ) {
+          return previous;
+        }
+
+        return { width, height };
+      });
+    };
+
+    const initial =
+      element.getBoundingClientRect();
+
+    update(initial.width, initial.height);
+
+    if (
+      typeof ResizeObserver ===
+      "undefined"
+    ) {
+      return;
+    }
+
+    const observer =
+      new ResizeObserver((entries) => {
+        const entry = entries[0];
+
+        if (entry) {
+          update(
+            entry.contentRect.width,
+            entry.contentRect.height,
+          );
+        }
+      });
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [name]);
+
   if (ancestors.has(name)) {
     return (
       <div className="paix-wireframe-error">
@@ -96,8 +171,10 @@ function WireframeArea({
     );
   }
 
-  const slice = slices.get(name);
-
+const slice = selectSlice(
+  slices.get(name),
+  dimensions,
+);
   if (!slice) {
     const content =
       slot && slotOwner
@@ -112,6 +189,7 @@ function WireframeArea({
         className={`paix-wireframe-area ${
           slot ? "paix-wireframe-slot" : ""
         }`}
+        ref={areaRef}
         style={style}
         data-paix-area={
           slot ? undefined : name
@@ -153,6 +231,7 @@ function WireframeArea({
   return (
     <div
       className="paix-wireframe-area"
+      ref={areaRef}
       style={{
         ...style,
 
@@ -201,6 +280,7 @@ function WireframeArea({
     return (
       <div
         className="paix-wireframe-area"
+        ref={areaRef}
         style={style}
         data-paix-area={name}
       >
@@ -246,6 +326,7 @@ function WireframeArea({
   return (
     <div
       className="paix-wireframe-area"
+      ref={areaRef}
       style={{
         ...getSliceStyle(slice),
         ...style,
@@ -295,6 +376,69 @@ function AreaLabel({
     </span>
   );
 }
+
+function selectSlice(
+  rules: PaixSliceNode[] | undefined,
+  dimensions: {
+    width: number;
+    height: number;
+  } | null,
+): PaixSliceNode | undefined {
+  if (!rules?.length) {
+    return undefined;
+  }
+
+  if (dimensions) {
+    for (const rule of rules) {
+      const condition =
+        rule.condition;
+
+      if (!condition) {
+        continue;
+      }
+
+      if (
+        condition.than !== "than" ||
+        !(
+          condition.left === "width" ||
+          condition.left === "height"
+        ) ||
+        !(
+          condition.right === "width" ||
+          condition.right === "height"
+        )
+      ) {
+        continue;
+      }
+
+      const left =
+        dimensions[condition.left];
+
+      const right =
+        dimensions[condition.right];
+
+      if (
+        condition.operator ===
+          "greater" &&
+        left > right
+      ) {
+        return rule;
+      }
+
+      if (
+        condition.operator === "less" &&
+        left < right
+      ) {
+        return rule;
+      }
+    }
+  }
+
+  return rules.find(
+    (rule) => !rule.condition,
+  );
+}
+
 
 function createChildNames(
   slice: PaixSliceNode,

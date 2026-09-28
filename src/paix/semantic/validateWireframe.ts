@@ -22,7 +22,14 @@ export function validatePaixWireframe(
     "main",
   ]);
 
-  const slicedAreas = new Set<string>();
+  const areaOwner = new Map<string, string>([
+    ["main", "root"],
+  ]);
+
+  const rulesByTarget = new Map<
+    string,
+    PaixSliceNode[]
+  >();
 
   for (const slice of ast.slices) {
     const target = slice.target.path;
@@ -45,16 +52,14 @@ export function validatePaixWireframe(
       );
     }
 
-    if (slicedAreas.has(target)) {
-      addDiagnostic(
-        diagnostics,
-        source,
-        target,
-        `Area "${target}" is sliced more than once.`,
-      );
-    } else {
-      slicedAreas.add(target);
-    }
+    const existingRules =
+      rulesByTarget.get(target) ?? [];
+
+    existingRules.push(slice);
+    rulesByTarget.set(
+      target,
+      existingRules,
+    );
 
     validateSliceValue(
       slice,
@@ -68,8 +73,44 @@ export function validatePaixWireframe(
       diagnostics,
     );
 
+    if (slice.condition) {
+      const {
+        left,
+        operator,
+        than,
+        right,
+      } = slice.condition;
+
+      if (
+        (left !== "width" &&
+          left !== "height") ||
+        (right !== "width" &&
+          right !== "height") ||
+        (operator !== "greater" &&
+          operator !== "less") ||
+        than !== "than" ||
+        left === right
+      ) {
+        addDiagnostic(
+          diagnostics,
+          source,
+          target,
+          `Invalid size condition on "${target}". ` +
+            'Use "width greater than height", ' +
+            '"height greater than width", ' +
+            'or the corresponding "less than" form.',
+        );
+      }
+    }
+
     for (const area of slice.areas) {
-      if (availableAreas.has(area)) {
+      const owner =
+        areaOwner.get(area);
+
+      if (
+        owner !== undefined &&
+        owner !== target
+      ) {
         addDiagnostic(
           diagnostics,
           source,
@@ -82,12 +123,125 @@ export function validatePaixWireframe(
       }
 
       availableAreas.add(area);
+      areaOwner.set(area, target);
+    }
+  }
+
+  for (
+    const [target, rules] of
+    rulesByTarget
+  ) {
+    const fallbackRules =
+      rules.filter(
+        (rule) => !rule.condition,
+      );
+
+    if (fallbackRules.length > 1) {
+      addDiagnostic(
+        diagnostics,
+        source,
+        target,
+        `Area "${target}" is sliced more than once.`,
+      );
+    }
+
+    if (fallbackRules.length === 0) {
+      addDiagnostic(
+        diagnostics,
+        source,
+        target,
+        `Area "${target}" needs a slice without "when" as fallback.`,
+      );
+    }
+
+    const seenConditions =
+      new Set<string>();
+
+    for (const rule of rules) {
+      if (!rule.condition) {
+        continue;
+      }
+
+      const {
+        left,
+        operator,
+        right,
+      } = rule.condition;
+
+      const key =
+        `${left}:${operator}:${right}`;
+
+      if (seenConditions.has(key)) {
+        addDiagnostic(
+          diagnostics,
+          source,
+          target,
+          `Area "${target}" repeats the same size condition.`,
+        );
+      }
+
+      seenConditions.add(key);
+    }
+
+    const reference =
+      fallbackRules[0] ?? rules[0];
+
+    const expectedCount =
+      getSliceSlotCount(reference);
+
+    const expectedAreas =
+      reference.areas.join("\u0000");
+
+    for (const rule of rules) {
+      if (
+        getSliceSlotCount(rule) !==
+          expectedCount ||
+        rule.areas.join("\u0000") !==
+          expectedAreas
+      ) {
+        addDiagnostic(
+          diagnostics,
+          source,
+          target,
+          `All size variants of "${target}" ` +
+            "must keep the same number of slots " +
+            "and the same named areas.",
+        );
+
+        break;
+      }
     }
   }
 
   return diagnostics;
 }
+function getSliceSlotCount(
+  slice: PaixSliceNode,
+): number {
+  switch (slice.mode) {
+    case "vertical":
+    case "horizontal":
+      return 2;
 
+    case "vertical-centered":
+    case "horizontal-centered":
+      return 3;
+
+    case "island":
+      return 1;
+
+    case "columns":
+    case "rows":
+    case "layer":
+      return slice.count;
+
+    case "grid":
+      return (
+        slice.columns *
+        slice.rows
+      );
+  }
+}
 function validateSliceValue(
   slice: PaixSliceNode,
   source: string,
