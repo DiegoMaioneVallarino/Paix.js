@@ -1,59 +1,45 @@
-import type {
-  CSSProperties,
-} from "react";
-
+import { useEffect, type CSSProperties } from "react";
+import { usePreviewRuntime } from "./PreviewRuntime";
 import type {
   PaixComponentDefinitionNode,
   PaixComponentNode,
   PaixPlacementNode,
   PaixWireframeNode,
 } from "../paix/ast/ast.types";
-
 import type {
   PaixCompiledProject,
 } from "../paix/compiler/compiled.types";
-
 import {
   registerStandardLibrary,
 } from "../standard-library/registerStandardLibrary";
-
 import {
   componentRegistry,
   type PaixRuntimeProps,
 } from "./ComponentRegistry";
-
 import {
   evaluateExpression,
   PAIX_INPUTS_SCOPE_KEY,
   type PaixScope,
 } from "./evaluateExpression";
-
 import {
   isPaixEventArgument,
   resolvePaixEvent,
 } from "./EventRuntime";
-
 import {
   usePaixState,
   type PaixStateSetter,
 } from "./StateRuntime";
-
 import {
   WireframeRenderer,
 } from "./WireframeRenderer";
-
 import {
   PaixStyleSheet,
   resolvePaixStyleClasses,
 } from "./StyleRuntime";
-
-
 registerStandardLibrary();
-
 interface PaixRendererProps {
   program: PaixCompiledProject;
 }
-
 export function PaixRenderer({
   program,
 }: PaixRendererProps) {
@@ -64,19 +50,15 @@ export function PaixRenderer({
       </div>
     );
   }
-
   const page = program.entryPage;
-
   const wireframe =
     program.wireframes[page.wireframe];
-
   if (wireframe) {
     return (
   <div className="paix-page">
     <PaixStyleSheet
       styles={program.styles}
     />
-
     <ScopedWireframe
       wireframe={wireframe}
       placements={page.placements}
@@ -87,13 +69,11 @@ export function PaixRenderer({
   </div>
 );
   }
-
   return (
   <div className="paix-page">
     <PaixStyleSheet
       styles={program.styles}
     />
-
     {page.placements.map(
       (placement, index) => (
         <PagePlacement
@@ -106,12 +86,10 @@ export function PaixRenderer({
   </div>
 );
 }
-
 interface PagePlacementProps {
   placement: PaixPlacementNode;
   program: PaixCompiledProject;
 }
-
 function PagePlacement({
   placement,
   program,
@@ -119,7 +97,6 @@ function PagePlacement({
   const areaName = getTargetAreaName(
     placement.target,
   );
-
   return (
     <section
       className={`paix-area paix-area-${normalizeAreaName(
@@ -136,7 +113,6 @@ function PagePlacement({
     </section>
   );
 }
-
 interface ScopedWireframeProps {
   wireframe: PaixWireframeNode;
   placements: PaixPlacementNode[];
@@ -146,7 +122,6 @@ interface ScopedWireframeProps {
   setState?: PaixStateSetter;
   debug?: boolean;
 }
-
 function ScopedWireframe({
   wireframe,
   placements,
@@ -166,7 +141,6 @@ function ScopedWireframe({
           placement.target,
         ) === areaName,
     );
-
     return areaPlacements.map(
       (placement, index) => (
         <PlacementContent
@@ -180,7 +154,6 @@ function ScopedWireframe({
       ),
     );
   };
-
   const renderSlot = (
     areaName: string,
     slotIndex: number,
@@ -194,21 +167,17 @@ function ScopedWireframe({
           candidate.target,
         ) === areaName,
     );
-
     if (
       !placement ||
       placement.type !== "StackPlacement"
     ) {
       return null;
     }
-
     const component =
       placement.stack.items[slotIndex];
-
     if (!component) {
       return null;
     }
-
     return (
       <RuntimeComponent
         component={component}
@@ -219,7 +188,6 @@ function ScopedWireframe({
       />
     );
   };
-
  return (
   <WireframeRenderer
     wireframe={wireframe}
@@ -229,7 +197,6 @@ function ScopedWireframe({
   />
 );
 }
-
 interface PlacementContentProps {
   placement: PaixPlacementNode;
   program: PaixCompiledProject;
@@ -237,7 +204,6 @@ interface PlacementContentProps {
   stack: string[];
   setState?: PaixStateSetter;
 }
-
 function PlacementContent({
   placement,
   program,
@@ -256,16 +222,13 @@ function PlacementContent({
       />
     );
   }
-
   const slotCount = Math.max(
     placement.stack.items.length,
     1,
   );
-
   const style = {
     "--paix-slot-count": slotCount,
   } as CSSProperties;
-
   return (
     <div
       className={`paix-stack ${
@@ -297,7 +260,6 @@ function PlacementContent({
     </div>
   );
 }
-
 interface RuntimeComponentProps {
   component: PaixComponentNode;
   program: PaixCompiledProject;
@@ -305,7 +267,6 @@ interface RuntimeComponentProps {
   stack: string[];
   setState?: PaixStateSetter;
 }
-
 function RuntimeComponent({
   component,
   program,
@@ -313,25 +274,22 @@ function RuntimeComponent({
   stack,
   setState,
 }: RuntimeComponentProps) {
+  const preview = usePreviewRuntime();
   const directStyleName =
     getDirectStyleName(component);
-
   const invocationValues =
     evaluateArguments(
       component,
       scope,
       setState,
     );
-
   const NativeComponent =
     componentRegistry.get(component.name);
-
   if (NativeComponent) {
     const directStyle =
       directStyleName
         ? program.styles[directStyleName]
         : undefined;
-
     if (
       directStyleName &&
       !directStyle
@@ -342,20 +300,18 @@ function RuntimeComponent({
         </div>
       );
     }
-
     const directStyleClasses =
       directStyle
         ? resolvePaixStyleClasses(
             directStyle,
             scope,
+            preview?.interaction,
           )
         : "";
-
     const className = mergeClassNames(
       invocationValues.className,
       directStyleClasses,
     );
-
     return (
       <NativeComponent
         {...(
@@ -366,10 +322,8 @@ function RuntimeComponent({
       />
     );
   }
-
   const definition =
     program.components[component.name];
-
   if (!definition) {
     return (
       <UnknownComponent
@@ -377,7 +331,6 @@ function RuntimeComponent({
       />
     );
   }
-
   if (stack.includes(component.name)) {
     return (
       <div className="paix-runtime-error">
@@ -386,7 +339,6 @@ function RuntimeComponent({
       </div>
     );
   }
-
   return (
     <UserDefinedComponent
       definition={definition}
@@ -402,7 +354,6 @@ function RuntimeComponent({
     />
   );
 }
-
 interface UserDefinedComponentProps {
   definition: PaixComponentDefinitionNode;
   suppliedValues: PaixScope;
@@ -410,6 +361,7 @@ interface UserDefinedComponentProps {
   program: PaixCompiledProject;
   stack: string[];
   debug?: boolean;
+  inspect?: boolean;
 }
 function UserDefinedComponent({
   definition,
@@ -418,20 +370,20 @@ function UserDefinedComponent({
   program,
   stack,
   debug = false,
+  inspect = false,
 }: UserDefinedComponentProps) {
+  const preview = usePreviewRuntime();
+  const publish = preview?.publish;
   const resolvedInputs =
     resolveComponentInputs(
       definition,
       suppliedValues,
     );
-
   const initialScope: PaixScope = {
     ...resolvedInputs,
-
     [PAIX_INPUTS_SCOPE_KEY]:
       resolvedInputs,
   };
-
   const {
     values: stateValues,
     setValue: setState,
@@ -439,20 +391,20 @@ function UserDefinedComponent({
     definition.states,
     initialScope,
   );
-
+  useEffect(() => {
+    if (inspect && publish) publish({ values: stateValues, setValue: setState });
+  }, [inspect, publish, stateValues, setState]);
+  useEffect(() => () => { if (inspect && publish) publish(null); }, [inspect, publish]);
   const localScope: PaixScope = {
     ...resolvedInputs,
     ...stateValues,
-
     [PAIX_INPUTS_SCOPE_KEY]:
       resolvedInputs,
   };
-
   const wireframe =
     program.wireframes[
       definition.wireframe
     ];
-
   if (!wireframe) {
     return (
       <div className="paix-runtime-error">
@@ -462,7 +414,6 @@ function UserDefinedComponent({
       </div>
     );
   }
-
   /*
    * El estilo proporcionado al invocar
    * el componente reemplaza el estilo
@@ -471,12 +422,10 @@ function UserDefinedComponent({
   const resolvedStyleName =
     invocationStyleName ??
     definition.style;
-
   const styleDefinition =
     resolvedStyleName
       ? program.styles[resolvedStyleName]
       : undefined;
-
   if (
     resolvedStyleName &&
     !styleDefinition
@@ -487,15 +436,14 @@ function UserDefinedComponent({
       </div>
     );
   }
-
   const styleClasses =
     styleDefinition
       ? resolvePaixStyleClasses(
           styleDefinition,
           localScope,
+          preview?.interaction,
         )
       : "";
-
   return (
     <div
       className={[
@@ -504,6 +452,7 @@ function UserDefinedComponent({
       ]
         .filter(Boolean)
         .join(" ")}
+      tabIndex={styleDefinition?.conditions.some(condition => condition.condition && typeof condition.condition === "object" && condition.condition.type === "Reference" && condition.condition.name === "focus") ? 0 : undefined}
       data-paix-component={
         definition.name
       }
@@ -530,7 +479,6 @@ interface PaixComponentPreviewProps {
   definition: PaixComponentDefinitionNode;
   program: PaixCompiledProject;
 }
-
 export function PaixComponentPreview({
   definition,
   program,
@@ -538,14 +486,14 @@ export function PaixComponentPreview({
   return (
     <div className="paix-page">
       <PaixStyleSheet styles={program.styles} />
-
       <UserDefinedComponent
-        key={definition.name}
+        key={`${definition.name}:${JSON.stringify(definition.states)}`}
         definition={definition}
         suppliedValues={{}}
         program={program}
         stack={[definition.name]}
         debug
+        inspect
       />
     </div>
   );
@@ -557,14 +505,11 @@ function resolveComponentInputs(
   const resolvedInputs: PaixScope = {
     ...suppliedValues,
   };
-
   const inputScope: PaixScope = {
     ...resolvedInputs,
-
     [PAIX_INPUTS_SCOPE_KEY]:
       resolvedInputs,
   };
-
   // Compatibilidad temporal con
   // el antiguo bloque parameters:
   for (
@@ -583,14 +528,11 @@ function resolveComponentInputs(
           inputScope,
         );
     }
-
     inputScope[parameter.name] =
       resolvedInputs[parameter.name];
   }
-
   return resolvedInputs;
 }
-
 function evaluateArguments(
   component: PaixComponentNode,
   scope: PaixScope,
@@ -610,7 +552,6 @@ function evaluateArguments(
         ) {
           return [
             argument.name,
-
             resolvePaixEvent(
               argument.value,
               {
@@ -620,10 +561,8 @@ function evaluateArguments(
             ),
           ];
         }
-
         return [
           argument.name,
-
           evaluateExpression(
             argument.value,
             scope,
@@ -640,17 +579,13 @@ function getDirectStyleName(
       (argument) =>
         argument.name === "style",
     );
-
   if (!styleArgument) {
     return undefined;
   }
-
   const value = styleArgument.value;
-
   if (typeof value === "string") {
     return value;
   }
-
   if (
     value &&
     typeof value === "object" &&
@@ -658,10 +593,8 @@ function getDirectStyleName(
   ) {
     return value.name;
   }
-
   return undefined;
 }
-
 function mergeClassNames(
   currentClassName: unknown,
   styleClasses: string,
@@ -670,7 +603,6 @@ function mergeClassNames(
     typeof currentClassName === "string"
       ? currentClassName
       : "";
-
   return [
     current,
     styleClasses,
@@ -678,24 +610,18 @@ function mergeClassNames(
     .filter(Boolean)
     .join(" ");
 }
-
-
-
-
 function getTargetAreaName(
   target: PaixPlacementNode["target"],
 ): string {
   const areaSegments = target.slots
     ? target.segments.slice(0, -1)
     : target.segments;
-
   return (
     areaSegments[
       areaSegments.length - 1
     ] ?? "area"
   );
 }
-
 function UnknownComponent({
   name,
 }: {
@@ -708,7 +634,6 @@ function UnknownComponent({
     </div>
   );
 }
-
 function normalizeAreaName(
   area: string,
 ): string {

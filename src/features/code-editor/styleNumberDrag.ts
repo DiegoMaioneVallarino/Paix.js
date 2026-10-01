@@ -13,7 +13,8 @@ interface NumericValue {
 }
 
 const numericProperties = new Set([
-  "opacity", "inline", "outline", "radius", "shadowBlur",
+  "opacity", "inlineWeight", "inlineSpread", "outlineWeight", "outlineSpread",
+  "shadowWeight", "shadowSpread", "radius",
   "textSize", "textWeight", "lineHeight", "letterSpacing",
   "backdropBlur", "blur", "scale", "transitionTime",
 ]);
@@ -74,6 +75,7 @@ export function dragStyleNumber(
 export function installStyleNumberDrag(
   editor: PaixEditor,
   isStyleFile: () => boolean,
+  openContextMenu: (x: number, y: number) => void,
 ): () => void {
   const root = editor.getDomNode();
   if (!root) return () => {};
@@ -82,11 +84,14 @@ export function installStyleNumberDrag(
   if (!ownerWindow) return () => {};
 
   let cancelDrag: (() => void) | null = null;
+  let suppressContextUntil = 0;
+  const highlight = editor.createDecorationsCollection();
   let hoveredElement: HTMLElement | null = null;
   let previousHoverCursor = "";
   let previousHoverPriority = "";
 
   const clearHover = () => {
+    highlight.clear();
     if (!hoveredElement) return;
     if (previousHoverCursor) {
       hoveredElement.style.setProperty(
@@ -119,6 +124,17 @@ export function installStyleNumberDrag(
 
     clearHover();
     if (!element) return;
+    if (position && isDraggable) {
+      highlight.set([{
+        range: {
+          startLineNumber: position.lineNumber,
+          endLineNumber: position.lineNumber,
+          startColumn: isDraggable.startColumn,
+          endColumn: isDraggable.endColumn,
+        },
+        options: { inlineClassName: "paix-number-draggable" },
+      }]);
+    }
     hoveredElement = element;
     previousHoverCursor = element.style.getPropertyValue("cursor");
     previousHoverPriority = element.style.getPropertyPriority("cursor");
@@ -127,7 +143,7 @@ export function installStyleNumberDrag(
 
   const onPointerDown = (event: PointerEvent) => {
     if (
-      event.button !== 0 || event.shiftKey || event.altKey ||
+      event.button !== 2 || event.shiftKey || event.altKey ||
       event.ctrlKey || event.metaKey || !isStyleFile()
     ) return;
 
@@ -152,6 +168,8 @@ export function installStyleNumberDrag(
     const pointerId = event.pointerId;
     let currentText = original.text;
     let changed = false;
+    let dragged = false;
+    let finished = false;
 
     editor.focus();
     editor.setPosition({ lineNumber: position.lineNumber, column: position.column });
@@ -163,6 +181,8 @@ export function installStyleNumberDrag(
     root.ownerDocument.body.style.userSelect = "none";
 
     const stop = () => {
+      if (finished) return;
+      finished = true;
       ownerWindow.removeEventListener("pointermove", onPointerMove, true);
       ownerWindow.removeEventListener("pointerup", onPointerUp, true);
       ownerWindow.removeEventListener("pointercancel", onPointerCancel, true);
@@ -175,7 +195,8 @@ export function installStyleNumberDrag(
     };
 
     const onPointerMove = (move: PointerEvent) => {
-      if (move.pointerId !== pointerId) return;
+      if (finished || move.pointerId !== pointerId) return;
+      if (Math.abs(move.clientX - startX) >= 4) dragged = true;
       move.preventDefault();
       move.stopPropagation();
 
@@ -207,9 +228,12 @@ export function installStyleNumberDrag(
     };
 
     const onPointerUp = (up: PointerEvent) => {
-      if (up.pointerId !== pointerId) return;
+      if (finished || up.pointerId !== pointerId) return;
       up.preventDefault();
+      up.stopPropagation();
+      suppressContextUntil = Date.now() + 400;
       stop();
+      if (!dragged) openContextMenu(up.clientX, up.clientY);
     };
 
     const onPointerCancel = (cancel: PointerEvent) => {
@@ -229,11 +253,25 @@ export function installStyleNumberDrag(
   };
 
   root.addEventListener("pointerdown", onPointerDown, true);
+  const modelChange = editor.onDidChangeModel(() => {
+    cancelDrag?.();
+    clearHover();
+  });
+  const onContextMenu = (event: MouseEvent) => {
+    if (cancelDrag || Date.now() < suppressContextUntil) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  };
+  root.addEventListener("contextmenu", onContextMenu, true);
   root.addEventListener("pointermove", onHover, true);
   root.addEventListener("pointerleave", clearHover, true);
   return () => {
     cancelDrag?.();
     clearHover();
+    highlight.clear();
+    modelChange.dispose();
+    root.removeEventListener("contextmenu", onContextMenu, true);
     root.removeEventListener("pointerdown", onPointerDown, true);
     root.removeEventListener("pointermove", onHover, true);
     root.removeEventListener("pointerleave", clearHover, true);

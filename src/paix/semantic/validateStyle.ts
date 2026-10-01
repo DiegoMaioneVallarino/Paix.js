@@ -15,15 +15,18 @@ const allowedProperties = new Set<string>([
 
   "opacity",
 
-  "inline",
+  "inlineWeight",
+  "inlineSpread",
   "inlineColor",
 
-  "outline",
+  "outlineWeight",
+  "outlineSpread",
   "outlineColor",
 
-  "shadow",
+  "shadowWeight",
+  "shadowSpread",
   "shadowColor",
-  "shadowBlur",
+
 
   "radius",
 
@@ -194,8 +197,12 @@ function validateProperties(
       continue;
     }
 
+    if (property.name === "shadowColor" && /gradient/.test(property.value)) {
+      diagnostics.push({ source: "semantic", severity: "error", message: '"shadowColor" requires a solid color. Use gradients in "outlineColor" or "inlineColor".', line: position.line, column: position.column, length: property.name.length });
+    }
+
     if (
-      property.name === "shadowBlur" &&
+      /^(?:shadow|outline|inline)(?:Weight|Spread)$/.test(property.name) &&
       !/^(?:\d+(?:\.\d+)?)(?:px)?$/.test(
         property.value.trim(),
       )
@@ -204,7 +211,7 @@ function validateProperties(
         source: "semantic",
         severity: "error",
         message:
-          '"shadowBlur" must be a non-negative number, optionally followed by "px".',
+          `"${property.name}" must be a non-negative number, optionally followed by "px".`,
         line: position.line,
         column: position.column,
         length: property.name.length,

@@ -1,0 +1,7 @@
+.preview-controls { position:relative; flex-wrap:wrap; gap:6px; }
+.paix-preview-mode,.paix-preview-states summary { color:#ccefff; background:#071e2d; border:1px solid #185172; border-radius:6px; font:12px system-ui; padding:5px 8px; cursor:pointer; }
+.paix-preview-states { position:relative; }
+.paix-preview-state-list { position:absolute; z-index:200; right:0; top:calc(100% + 8px); min-width:220px; max-height:280px; overflow:auto; border:1px solid #286684; border-radius:10px; background:#061824f5; color:#ccefff; padding:12px; box-shadow:0 10px 30px #0008; }
+.paix-preview-state-list label { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:5px 0; font:12px monospace; }
+.paix-preview-state-list input:not([type="checkbox"]) { width:110px; color:#e6f7ff; background:#03111b; border:1px solid #286684; border-radius:5px; padding:5px; }
+.paix-preview-state-list input[type="checkbox"] { accent-color:#1abaff; }

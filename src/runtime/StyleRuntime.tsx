@@ -25,12 +25,14 @@ export function PaixStyleSheet({ styles }: PaixStyleSheetProps) {
 export function resolvePaixStyleClasses(
   style: PaixStyleNode,
   scope: PaixScope,
+  interaction?: string,
 ): string {
   const baseClass = getStyleClassName(style.name);
   const classes = [baseClass];
 
   style.conditions.forEach((condition, index) => {
-    if (Boolean(evaluateExpression(condition.condition, scope))) {
+    const pseudo = getInteraction(condition.condition);
+    if (pseudo ? pseudo === interaction : Boolean(evaluateExpression(condition.condition, scope))) {
       classes.push(`${baseClass}--when-${index}`);
     }
   });
@@ -38,21 +40,23 @@ export function resolvePaixStyleClasses(
   return classes.join(" ");
 }
 
-function compileStyle(style: PaixStyleNode): string {
+export function compileStyle(style: PaixStyleNode): string {
   const baseClass = getStyleClassName(style.name);
   const base = `.${baseClass}`;
 
   const rules = [
-    `${base}{position:relative;--paix-outline-width:0px;--paix-inline-width:0px;--paix-outline-paint:transparent;--paix-inline-paint:transparent;--paix-shadow-color:black;${compileProperties(style.properties)}}`,
+    `${base}{position:relative;--paix-outline-width:0px;--paix-inline-width:0px;--paix-outline-paint:transparent;--paix-inline-paint:transparent;--paix-shadow-color:transparent;--paix-shadow-weight:0px;--paix-shadow-spread:0px;--paix-outline-weight:0px;--paix-inline-weight:0px;box-shadow:0 0 var(--paix-shadow-weight) var(--paix-shadow-spread) var(--paix-shadow-color);${compileProperties(style.properties)}}`,
     `${base}::before,${base}::after{content:"";position:absolute;box-sizing:border-box;pointer-events:none;border-style:solid;border-color:transparent;background-clip:border-box;mask:linear-gradient(#000 0 0) border-box,linear-gradient(#000 0 0) padding-box;mask-composite:exclude;-webkit-mask:linear-gradient(#fff 0 0) border-box,linear-gradient(#fff 0 0) padding-box;-webkit-mask-composite:xor;}`,
-    `${base}::before{inset:0;border-width:var(--paix-outline-width);border-radius:inherit;background:var(--paix-outline-paint) border-box;}`,
-    `${base}::after{inset:var(--paix-outline-width);border-width:var(--paix-inline-width);border-radius:max(0px,calc(var(--paix-radius,0px) - var(--paix-outline-width)));background:var(--paix-inline-paint) border-box;}`,
+    `${base}::before{inset:0;border-width:var(--paix-outline-width);border-radius:inherit;background:var(--paix-outline-paint) border-box;filter:blur(var(--paix-outline-weight));}`,
+    `${base}::after{inset:var(--paix-outline-width);border-width:var(--paix-inline-width);border-radius:max(0px,calc(var(--paix-radius,0px) - var(--paix-outline-width)));background:var(--paix-inline-paint) border-box;filter:blur(var(--paix-inline-weight));}`,
   ];
 
   style.conditions.forEach((condition, index) => {
-    rules.push(
-      `${base}--when-${index}{${compileProperties(condition.properties)}}`,
-    );
+    const pseudo = getInteraction(condition.condition);
+    const selector = pseudo
+      ? `${base}${pseudo === "focus" ? ":focus-within" : `:${pseudo}`},${base}--when-${index}`
+      : `${base}--when-${index}`;
+    rules.push(`${selector}{${compileProperties(condition.properties)}}`);
   });
 
   return rules.join("\n");
@@ -66,7 +70,7 @@ function compileProperties(properties: PaixStylePropertyNode[]): string {
     .find((property) => property.name === "shadowColor");
 
   return declarations + (shadowColor
-    ? `--paix-shadow-color:${shadowColor.value.trim()};`
+    ? `--paix-shadow-color:${shadowColor.value.trim() === "none" ? "transparent" : shadowColor.value.trim()};`
     : "");
 }
 
@@ -89,21 +93,25 @@ function compileProperty(property: PaixStylePropertyNode): string {
       return `--paix-radius:${normalizeLength(value)};border-radius:var(--paix-radius);`;
 
     // Ambos anillos son capas visuales dentro del rectángulo del componente.
-    case "outline":
+    case "outlineSpread":
       return `--paix-outline-width:${normalizeRingWidth(value)};`;
     case "outlineColor":
       return `--paix-outline-paint:${normalizePaint(value)};`;
-    case "inline":
+    case "inlineSpread":
       return `--paix-inline-width:${normalizeRingWidth(value)};`;
     case "inlineColor":
       return `--paix-inline-paint:${normalizePaint(value)};`;
 
-    case "shadow":
-      return `--paix-shadow-color:${value.split(/\s+/).slice(1).join(" ") || "black"};box-shadow:${normalizeBoxShadow(value)};`;
+    case "outlineWeight":
+      return `--paix-outline-weight:${normalizeLength(value)};`;
+    case "inlineWeight":
+      return `--paix-inline-weight:${normalizeLength(value)};`;
+    case "shadowWeight":
+      return `--paix-shadow-weight:${normalizeLength(value)};`;
+    case "shadowSpread":
+      return `--paix-shadow-spread:${normalizeLength(value)};`;
     case "shadowColor":
       return `--paix-shadow-color:${value};`;
-    case "shadowBlur":
-      return `--paix-shadow-blur:${normalizeLength(value)};`;
 
     case "font":
       return `font-family:${value};`;
@@ -146,26 +154,6 @@ function normalizePaint(value: string): string {
 function isGradient(value: string): boolean {
   return /^(?:radial\s+)?gradient\s/.test(value) ||
     /^(?:repeating-)?(?:linear|radial|conic)-gradient\s*\(/.test(value);
-}
-
-function normalizeBoxShadow(value: string): string {
-  if (value === "none") return "none";
-
-  const parts = value.split(/\s+/).filter(Boolean);
-  const color = "var(--paix-shadow-color)";
-
-  switch (parts[0]) {
-    case "soft":
-      return `0 6px var(--paix-shadow-blur,18px) ${color}`;
-    case "strong":
-      return `0 14px var(--paix-shadow-blur,40px) ${color}`;
-    case "inner":
-      return `inset 0 0 var(--paix-shadow-blur,14px) ${color}`;
-    case "glow":
-      return `0 0 var(--paix-shadow-blur,20px) ${color}`;
-    default:
-      return normalizeAdvancedShadow(value);
-  }
 }
 
 function normalizeTextShadow(value: string): string {
@@ -239,4 +227,11 @@ function normalizeCssFunctions(value: string): string {
 function getStyleClassName(styleName: string): string {
   return "paix-style-" + styleName.trim().toLowerCase()
     .replace(/[^a-z0-9_-]/g, "-");
+}
+
+export type PaixInteraction = "hover" | "focus" | "active";
+export function getInteraction(expression: import("../paix/ast/ast.types").PaixExpressionNode): PaixInteraction | null {
+  if (expression && typeof expression === "object" && expression.type === "Reference" && expression.kind === "value" &&
+      (expression.name === "hover" || expression.name === "focus" || expression.name === "active")) return expression.name;
+  return null;
 }
