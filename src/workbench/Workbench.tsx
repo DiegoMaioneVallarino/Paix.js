@@ -212,28 +212,36 @@ const inspectedComponent:
         </div>
 
         <div className="header-actions">
-          <button
-            type="button"
-            className="toolbar-button"
-            onClick={handleResetProject}
-          >
-            Reset
-          </button>
+  <a
+    href="/doc"
+    className="toolbar-button"
+    style={{ textDecoration: "none" }}
+  >
+    Documentación
+  </a>
 
-          <button
-            type="button"
-            className="toolbar-button"
-          >
-            Export
-          </button>
+  <button
+    type="button"
+    className="toolbar-button"
+    onClick={handleResetProject}
+  >
+    Reset
+  </button>
 
-          <button
-            type="button"
-            className="toolbar-button primary"
-          >
-            Run
-          </button>
-        </div>
+  <button
+    type="button"
+    className="toolbar-button"
+  >
+    Export
+  </button>
+
+  <button
+    type="button"
+    className="toolbar-button primary"
+  >
+    Run
+  </button>
+</div>
       </header>
 
       <div className="workbench-content">
