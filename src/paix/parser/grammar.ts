@@ -22,7 +22,6 @@ import {
   StringLiteral,
   TrueKeyword,
   ComponentKeyword,
-ParametersKeyword,
 StateKeyword,
 Dot,
 LeftBracket,
@@ -261,10 +260,6 @@ public component = this.RULE("component", () => {
   });
 
   this.OPTION2(() => {
-    this.SUBRULE(this.parameterSection);
-  });
-
-  this.OPTION3(() => {
     this.SUBRULE(this.stateSection);
   });
 
@@ -290,23 +285,6 @@ public style = this.RULE("style", () => {
   this.CONSUME(EOF);
 });
 
-private parameterSection = this.RULE(
-  "parameterSection",
-  () => {
-    this.CONSUME(ParametersKeyword);
-    this.CONSUME(Colon);
-
-    this.MANY({
-      GATE: () =>
-        this.LA(1).tokenType === Identifier &&
-        this.LA(2).tokenType === Colon,
-
-      DEF: () => {
-        this.SUBRULE(this.parameterDeclaration);
-      },
-    });
-  },
-);
 private inputReference = this.RULE(
   "inputReference",
   () => {
@@ -318,18 +296,6 @@ private inputReference = this.RULE(
     });
   },
 );
-private parameterDeclaration = this.RULE(
-  "parameterDeclaration",
-  () => {
-    this.CONSUME(Identifier, {
-      LABEL: "parameterName",
-    });
-
-    this.CONSUME(Colon);
-    this.SUBRULE(this.expression);
-  },
-);
-
 private stateSection = this.RULE(
   "stateSection",
   () => {

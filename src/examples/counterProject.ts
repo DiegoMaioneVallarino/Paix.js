@@ -84,14 +84,11 @@ main.slots > [
       type: "component",
 content: `component "Counter" CounterFrame
 
-parameters:
-    label: "Count"
-
 state:
     _count: 0
 
 labelArea >
-    Text(value: label)
+    Text(value: this.label otherwise "Count")
 
 valueArea >
     Text(value: _count)
@@ -116,11 +113,8 @@ actionsArea.slots > [
 
       content: `component "Header" HeaderFrame
 
-parameters:
-    title: "Paix"
-
 logoArea >
-    Text(value: title)
+    Text(value: this.title otherwise "Paix")
 
 actionsArea >
     Button(

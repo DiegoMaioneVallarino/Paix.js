@@ -161,10 +161,6 @@ export const LayerKeyword = createToken({
   name: "LayerKeyword",
   pattern: /layer\b/,
 });
-export const ParametersKeyword = createToken({
-  name: "ParametersKeyword",
-  pattern: /parameters\b/,
-});
 
 export const StateKeyword = createToken({
   name: "StateKeyword",
@@ -218,7 +214,6 @@ export const allTokens: TokenType[] = [
   ComponentKeyword,
   WireframeKeyword,
   StyleKeyword,
-  ParametersKeyword,
   StateKeyword,
   PageKeyword,
   ThisKeyword,

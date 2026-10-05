@@ -17,7 +17,7 @@ const program: PaixCompiledProject = {
     { type: "StyleCondition", condition: { type: "Reference", name: "_selected", kind: "state" }, properties: [{ type: "StyleProperty", name: "color", value: "blue" }] },
   ] } },
 };
-const definition: import("../../paix/ast/ast.types").PaixComponentDefinitionNode = { type: "ComponentDefinition", name: "Card", wireframe: "Frame", style: "Panel", parameters: [], states: [{ type: "State", name: "_selected", initialValue: false }], placements: [] };
+const definition: import("../../paix/ast/ast.types").PaixComponentDefinitionNode = { type: "ComponentDefinition", name: "Card", wireframe: "Frame", style: "Panel", states: [{ type: "State", name: "_selected", initialValue: false }], placements: [] };
 describe("Preview states and interaction", () => {
   test("edits a real component state and switches the forced interaction mode", async () => {
     const { container } = render(<PreviewPanel program={program} activeFileType="component" inspectedComponent={definition} inspectedStyle={null} inspectedWireframe={null} />);

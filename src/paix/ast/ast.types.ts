@@ -91,12 +91,6 @@ export interface PaixPageNode {
   placements: PaixPlacementNode[];
 }
 
-export interface PaixParameterNode {
-  type: "Parameter";
-  name: string;
-  defaultValue: PaixExpressionNode;
-}
-
 export interface PaixStateNode {
   type: "State";
   name: string;
@@ -127,7 +121,6 @@ export interface PaixComponentDefinitionNode {
   name: string;
   wireframe: string;
   style: string | null;
-  parameters: PaixParameterNode[];
   states: PaixStateNode[];
   placements: PaixPlacementNode[];
 }

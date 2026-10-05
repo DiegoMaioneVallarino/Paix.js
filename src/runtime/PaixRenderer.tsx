@@ -374,11 +374,7 @@ function UserDefinedComponent({
 }: UserDefinedComponentProps) {
   const preview = usePreviewRuntime();
   const publish = preview?.publish;
-  const resolvedInputs =
-    resolveComponentInputs(
-      definition,
-      suppliedValues,
-    );
+  const resolvedInputs: PaixScope = { ...suppliedValues };
   const initialScope: PaixScope = {
     ...resolvedInputs,
     [PAIX_INPUTS_SCOPE_KEY]:
@@ -497,41 +493,6 @@ export function PaixComponentPreview({
       />
     </div>
   );
-}
-function resolveComponentInputs(
-  definition: PaixComponentDefinitionNode,
-  suppliedValues: PaixScope,
-): PaixScope {
-  const resolvedInputs: PaixScope = {
-    ...suppliedValues,
-  };
-  const inputScope: PaixScope = {
-    ...resolvedInputs,
-    [PAIX_INPUTS_SCOPE_KEY]:
-      resolvedInputs,
-  };
-  // Compatibilidad temporal con
-  // el antiguo bloque parameters:
-  for (
-    const parameter of
-    definition.parameters
-  ) {
-    if (
-      !Object.hasOwn(
-        resolvedInputs,
-        parameter.name,
-      )
-    ) {
-      resolvedInputs[parameter.name] =
-        evaluateExpression(
-          parameter.defaultValue,
-          inputScope,
-        );
-    }
-    inputScope[parameter.name] =
-      resolvedInputs[parameter.name];
-  }
-  return resolvedInputs;
 }
 function evaluateArguments(
   component: PaixComponentNode,

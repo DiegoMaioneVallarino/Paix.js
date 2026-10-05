@@ -11,7 +11,7 @@ const sections: Section[] = [
     paragraphs: [
       "El wireframe divide el espacio en áreas rectangulares. Los componentes ocupan esas áreas y conectan contenido, atributos y eventos. Los estilos definen su apariencia y sus variantes.",
       "Cada archivo comienza con su tipo y un nombre. Una página o un componente también indica qué wireframe utiliza. El proyecto reúne archivos en pages, components, wireframes y styles.",
-      "Los ejemplos usan atributos recibidos mediante this.nombre. No necesitas volver a declarar esos atributos en un bloque parameters. Ese bloque continúa como compatibilidad en las versiones anteriores del runtime; retirarlo es un cambio independiente de esta documentación.",
+      "Los ejemplos usan atributos recibidos mediante this.nombre. No necesitas volver a declarar esos atributos en un bloque parameters. El bloque parameters: ya no forma parte del lenguaje. Usa this.nombre directamente y otherwise donde necesites un valor alternativo.",
     ],
     rows: [["Wireframe", "Geometría: áreas, divisiones y distribución."], ["Component", "Contenido, composición, estado y eventos."], ["Style", "Color, tipografía y efectos visuales."], ["Page", "Punto de entrada: coloca componentes en un wireframe."]],
   },

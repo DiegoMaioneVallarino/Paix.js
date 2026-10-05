@@ -82,26 +82,27 @@ actionsArea >
     });
   });
 
-  test("parses component parameters", () => {
-    const source = `component "Header" HeaderFrame
+  test("reads an input fallback without declarations", () => {
+    const result = parsePaixComponent(`component "Header" HeaderFrame
+logoArea > Text(value: this.title otherwise "Paix")`);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.ast).not.toHaveProperty("parameters");
+    const placement = result.ast?.placements[0];
+    if (!placement || placement.type !== "Placement") throw new Error("Expected placement");
+    expect(placement.component.arguments[0].value).toEqual({
+      type: "OtherwiseExpression",
+      value: { type: "InputReference", name: "title" },
+      fallback: "Paix",
+    });
+  });
 
+  test("rejects the removed parameters section", () => {
+    const result = parsePaixComponent(`component "Header" HeaderFrame
 parameters:
     title: "Paix"
-
-logoArea >
-    Text(value: title)`;
-
-    const result = parsePaixComponent(source);
-
-    expect(result.diagnostics).toEqual([]);
-
-    expect(result.ast?.parameters).toEqual([
-      {
-        type: "Parameter",
-        name: "title",
-        defaultValue: "Paix",
-      },
-    ]);
+logoArea > Text(value: title)`);
+    expect(result.ast).toBeNull();
+    expect(result.diagnostics.some(diagnostic => diagnostic.source === "parser")).toBe(true);
   });
 
   test("infers component inputs from this references", () => {

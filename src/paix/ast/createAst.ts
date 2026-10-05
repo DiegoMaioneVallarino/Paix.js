@@ -14,7 +14,6 @@ import type {
   PaixPlacementNode,
   PaixReferenceNode,
   PaixComponentDefinitionNode,
-PaixParameterNode,
 PaixStateNode,
 PaixAreaReferenceNode,
 PaixStackNode,
@@ -365,11 +364,6 @@ const styleSection =
 const style = styleSection
   ? (this.visit(styleSection) as string)
   : null;
-  const parameterSection =
-    ctx.parameterSection?.[0] as
-      | CstNode
-      | undefined;
-
   const stateSection =
     ctx.stateSection?.[0] as
       | CstNode
@@ -377,12 +371,6 @@ const style = styleSection
 
   const placements =
     (ctx.placement ?? []) as CstNode[];
-
-  const parameters = parameterSection
-    ? (this.visit(
-        parameterSection,
-      ) as PaixParameterNode[])
-    : [];
 
   const states = stateSection
     ? (this.visit(
@@ -395,40 +383,12 @@ const style = styleSection
   name: parseString(nameToken.image),
   wireframe: wireframeToken.image,
   style,
-  parameters,
   states,
 
   placements: placements.map((node) =>
     this.visit(node),
   ),
 };
-}
-
-public parameterSection(
-  ctx: CstChildren,
-): PaixParameterNode[] {
-  const declarations =
-    (ctx.parameterDeclaration ?? []) as CstNode[];
-
-  return declarations.map((node) =>
-    this.visit(node),
-  );
-}
-
-public parameterDeclaration(
-  ctx: CstChildren,
-): PaixParameterNode {
-  const name =
-    ctx.parameterName?.[0] as IToken;
-
-  const expression =
-    ctx.expression?.[0] as CstNode;
-
-  return {
-    type: "Parameter",
-    name: name.image,
-    defaultValue: this.visit(expression),
-  };
 }
 
 public stateSection(
