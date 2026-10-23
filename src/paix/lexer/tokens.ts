@@ -207,6 +207,9 @@ export const IsKeyword = createToken({
   pattern: /is\b/,
 });
 
+export const LeftBrace = createToken({ name: "LeftBrace", pattern: /\{/ });
+export const RightBrace = createToken({ name: "RightBrace", pattern: /\}/ });
+
 export const allTokens: TokenType[] = [
   WhiteSpace,
   Comment,
@@ -257,6 +260,8 @@ export const allTokens: TokenType[] = [
   RightParenthesis,
   LeftBracket,
   RightBracket,
+  LeftBrace,
+  RightBrace,
 ];
 export const paixLexer = new Lexer(allTokens);
 

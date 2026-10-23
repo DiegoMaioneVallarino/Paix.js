@@ -81,6 +81,33 @@ categoryArea >
     Text(value: this.category otherwise "General")` }],
   },
   {
+    id: "collections", label: "Colecciones y objetos", title: "Selecciona datos, conecta atributos.",
+    description: "Los estados _MAYÚSCULAS identifican colecciones de objetos con un id único.",
+    paragraphs: [
+      "Declara una colección como _PRODUCTS: [{ id: 333, label: \"Comprar\" }]. Paix valida que sea una lista de objetos con id numérico o de texto, sin duplicados. set_PRODUCTS actualiza la colección y aplica la misma validación; si falla, conserva el valor anterior.",
+      "Las posiciones comienzan en 1. _PRODUCTS{2} selecciona el segundo objeto; _PRODUCTS{id: 333} selecciona directamente un objeto por id. Un filtro por otros campos, como _PRODUCTS{category: \"women\"}, devuelve una colección. Puedes encadenar {1} para tomar el primer resultado.",
+      "Los filtros con varios campos requieren todas las coincidencias, comparan por valor y tipo y conservan el orden original. Un selector por posición o id inexistente devuelve un valor ausente, que admite otherwise. Un filtro sin resultados devuelve [].",
+      "Button(_PRODUCTS{2}) pasa únicamente los campos que Button acepta. Los campos sobrantes se ignoran. Los argumentos con nombre, como label: \"Ver\", tienen prioridad sobre todos los objetos suministrados, independientemente de su posición. false, 0 y una cadena vacía son valores definidos.",
+      "Los primitivos declaran sus atributos en el registro. Para componentes propios, Paix los obtiene de sus referencias this.nombre en el cuerpo, los estados y las condiciones de su estilo. No hay un bloque parameters. Para recibir un objeto completo como un atributo específico, usa Profile(user: _USERS{id: 333}) y lee this.user.name.",
+      "Los stacks siguen siendo listas explícitas: no se generan componentes automáticamente desde un filtro. Selecciona un objeto antes de pasarlo como argumento sin nombre. El ejemplo CollectionDemo está en src/examples/collectionProject.ts y puede inspeccionarse como componente en el Workbench.",
+    ],
+    rows: [["_PRODUCTS{1}", "Primer objeto."], ["_PRODUCTS{id: 333}.price", "Campo price del objeto con ese id."], ["_PRODUCTS{category: \"women\"}", "Colección filtrada."], ["_PRODUCTS{category: \"women\"}{1}.name", "Nombre del primer resultado."], ["this.user.location.city", "Acceso a campos de un objeto recibido."]],
+    examples: [{ title: "Objetos en un stack explícito", code: `component "Products" ProductsFrame
+
+state:
+    _PRODUCTS: [
+        { id: 333, label: "Aurora", disabled: false, price: 120 },
+        { id: 334, label: "Atlas", disabled: true, price: 180 }
+    ]
+
+main.slots > [
+    Button(_PRODUCTS{1}),
+    Button(_PRODUCTS{id: 334}, label: "Ver Atlas")
+]` }, { title: "Wireframe del ejemplo", code: `wireframe "ProductsFrame"
+
+main slice columns 2` }],
+  },
+  {
     id: "styles", label: "Styles", title: "Diseño visual sin mover la geometría.",
     description: "Aplica un estilo a un componente o directamente a un primitivo.",
     paragraphs: [

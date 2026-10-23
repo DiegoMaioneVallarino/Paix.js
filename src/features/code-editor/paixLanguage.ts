@@ -104,6 +104,7 @@ export function registerPaixLanguage(monaco: Monaco) {
     [/\bon[A-Z][a-zA-Z0-9_]*/, "event"],
 
     [/\bset_[a-zA-Z_][a-zA-Z0-9_]*/, "setter"],
+    [/\b_[A-Z][A-Z0-9_]*\b/, "collection"],
     [/\b_[a-zA-Z][a-zA-Z0-9_]*/, "state"],
 
     [/\b[A-Z][a-zA-Z0-9_]*/, "component"],

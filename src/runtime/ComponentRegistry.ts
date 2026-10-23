@@ -11,11 +11,17 @@ export class ComponentRegistry {
     PaixRuntimeComponent
   >();
 
+  private readonly inputNames = new Map<string, readonly string[]>();
+
+  public getAcceptedInputs(name: string): readonly string[] { return this.inputNames.get(name) ?? []; }
+
   public register(
     name: string,
     component: PaixRuntimeComponent,
+    acceptedInputs: readonly string[] = [],
   ): void {
     this.components.set(name, component);
+    this.inputNames.set(name, [...acceptedInputs]);
   }
 
   public get(

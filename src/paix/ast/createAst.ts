@@ -7,6 +7,7 @@ import { paixParser } from "../parser/grammar";
 
 import type {
   PaixArgumentNode,
+  PaixComponentArgumentNode,
   PaixCallExpressionNode,
   PaixComponentNode,
   PaixExpressionNode,
@@ -486,7 +487,7 @@ public stack(ctx: CstChildren): PaixStackNode {
       ctx.componentName?.[0] as IToken;
 
     const argumentsList =
-      (ctx.argument ?? []) as CstNode[];
+      (ctx.componentArgument ?? []) as CstNode[];
 
     return {
       type: "Component",
@@ -496,6 +497,34 @@ public stack(ctx: CstChildren): PaixStackNode {
         this.visit(node),
       ),
     };
+  }
+
+  public componentArgument(ctx: CstChildren): PaixComponentArgumentNode {
+    if (ctx.argument) return this.visit(ctx.argument[0] as CstNode);
+    return { type: "ObjectArgument", value: this.visit(ctx.expression[0] as CstNode) };
+  }
+  public arrayExpression(ctx: CstChildren): PaixExpressionNode {
+    return { type: "ArrayExpression", items: ((ctx.expression ?? []) as CstNode[]).map(node => this.visit(node)) };
+  }
+  public objectProperty(ctx: CstChildren): { name: string; value: PaixExpressionNode } {
+    const token = ctx.propertyName[0] as IToken;
+    return { name: token.image.startsWith('"') ? parseString(token.image) : token.image, value: this.visit(ctx.expression[0] as CstNode) };
+  }
+  public objectExpression(ctx: CstChildren): PaixExpressionNode {
+    return { type: "ObjectExpression", properties: ((ctx.objectProperty ?? []) as CstNode[]).map(node => this.visit(node)) };
+  }
+  public memberSuffix(ctx: CstChildren): string { return (ctx.property[0] as IToken).image; }
+  public selectorSuffix(ctx: CstChildren): { position?: PaixExpressionNode; criteria?: { name: string; value: PaixExpressionNode }[] } {
+    return ctx.position ? { position: this.visit(ctx.position[0] as CstNode) }
+      : { criteria: ((ctx.objectProperty ?? []) as CstNode[]).map(node => this.visit(node)) };
+  }
+  public postfixExpression(ctx: CstChildren): PaixExpressionNode {
+    let result = this.visit(ctx.primary[0] as CstNode) as PaixExpressionNode;
+    for (const suffix of (ctx.suffix ?? []) as CstNode[]) {
+      if (suffix.name === "memberSuffix") result = { type: "MemberExpression", object: result, property: this.visit(suffix) };
+      else result = { type: "SelectorExpression", source: result, ...this.visit(suffix) };
+    }
+    return result;
   }
 
   public argument(
@@ -601,6 +630,8 @@ public additiveExpression(
   ): PaixExpressionNode {
 
 
+if (ctx.arrayExpression) return this.visit(ctx.arrayExpression[0] as CstNode);
+if (ctx.objectExpression) return this.visit(ctx.objectExpression[0] as CstNode);
 if (ctx.inputReference) {
   return this.visit(
     ctx.inputReference[0] as CstNode,

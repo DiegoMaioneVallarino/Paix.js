@@ -1,3 +1,4 @@
+import { isCollectionState } from "./collectionValues";
 import { useEffect, useState, type CSSProperties } from "react";
 import type { PaixExpressionNode, PaixStyleNode } from "../paix/ast/ast.types";
 import type { PaixCompiledProject } from "../paix/compiler/compiled.types";
@@ -16,11 +17,15 @@ export function getStyleSampleValues(style: PaixStyleNode): Record<string, unkno
     if (!node || typeof node !== "object") return;
     if (node.type === "InputReference" || (node.type === "Reference" && node.kind === "state")) {
       const key = node.type === "InputReference" ? `this.${node.name}` : node.name;
-      if (!Object.hasOwn(values, key)) values[key] = typeof comparison === "string" ? "" : typeof comparison === "number" ? 0 : false;
+      if (!Object.hasOwn(values, key)) values[key] = isCollectionState(key) ? [] : typeof comparison === "string" ? "" : typeof comparison === "number" ? 0 : false;
     } else if (node.type === "ComparisonExpression" || node.type === "BinaryExpression") {
       visit(node.left, node.right); visit(node.right, node.left);
     } else if (node.type === "OtherwiseExpression") { visit(node.value); visit(node.fallback); }
     else if (node.type === "CallExpression") node.arguments.forEach(argument => visit(argument));
+    else if (node.type === "ArrayExpression") node.items.forEach(item => visit(item));
+    else if (node.type === "ObjectExpression") node.properties.forEach(property => visit(property.value));
+    else if (node.type === "MemberExpression") visit(node.object);
+    else if (node.type === "SelectorExpression") { visit(node.source); if (node.position !== undefined) visit(node.position); node.criteria?.forEach(criterion => visit(criterion.value)); }
   };
   style.conditions.forEach(condition => visit(condition.condition));
   return values;

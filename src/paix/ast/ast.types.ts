@@ -41,7 +41,38 @@ export type PaixExpressionNode =
   | PaixCallExpressionNode
   | PaixBinaryExpressionNode
   | PaixOtherwiseExpressionNode
-  | PaixComparisonExpressionNode;
+  | PaixComparisonExpressionNode
+  | PaixArrayExpressionNode
+  | PaixObjectExpressionNode
+  | PaixMemberExpressionNode
+  | PaixSelectorExpressionNode;
+
+export interface PaixArrayExpressionNode {
+  type: "ArrayExpression";
+  items: PaixExpressionNode[];
+}
+export interface PaixObjectExpressionNode {
+  type: "ObjectExpression";
+  properties: { name: string; value: PaixExpressionNode }[];
+}
+export interface PaixMemberExpressionNode {
+  type: "MemberExpression";
+  object: PaixExpressionNode;
+  property: string;
+}
+export interface PaixSelectorExpressionNode {
+  type: "SelectorExpression";
+  source: PaixExpressionNode;
+  position?: PaixExpressionNode;
+  criteria?: { name: string; value: PaixExpressionNode }[];
+}
+export interface PaixObjectArgumentNode {
+  type: "ObjectArgument";
+  name?: never;
+  state?: never;
+  value: PaixExpressionNode;
+}
+export type PaixComponentArgumentNode = PaixArgumentNode | PaixObjectArgumentNode;
 
 export interface PaixArgumentNode {
   type: "Argument";
@@ -53,7 +84,7 @@ export interface PaixArgumentNode {
 export interface PaixComponentNode {
   type: "Component";
   name: string;
-  arguments: PaixArgumentNode[];
+  arguments: PaixComponentArgumentNode[];
 }
 
 export interface PaixAreaReferenceNode {

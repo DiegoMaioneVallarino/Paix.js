@@ -109,6 +109,7 @@ export function validatePaixPage(
       const argumentNames = new Set<string>();
 
       for (const argument of placedComponent.arguments) {
+        if (argument.type === "ObjectArgument") continue;
         if (argumentNames.has(argument.name)) {
           const argumentPosition =
             findSourcePosition(

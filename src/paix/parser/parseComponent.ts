@@ -1,3 +1,4 @@
+import { validateCollectionDeclarations } from "../semantic/validateCollections";
 import type { IToken } from "chevrotain";
 import type { PaixComponentDefinitionNode } from "../ast/ast.types";
 import { paixAstVisitor } from "../ast/createAst";
@@ -55,11 +56,7 @@ export function parsePaixComponent(
     };
   }
 
-  return {
-    ast: paixAstVisitor.visit(
-      cst,
-    ) as PaixComponentDefinitionNode,
-
-    diagnostics: [],
-  };
+  const ast = paixAstVisitor.visit(cst) as PaixComponentDefinitionNode;
+  const collectionDiagnostics = validateCollectionDeclarations(ast, source);
+  return { ast: collectionDiagnostics.length ? null : ast, diagnostics: collectionDiagnostics };
 }

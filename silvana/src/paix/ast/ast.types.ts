@@ -1,0 +1,195 @@
+export type PaixPrimitive =
+  | string
+  | number
+  | boolean
+  | null;
+
+export interface PaixReferenceNode {
+  type: "Reference";
+  name: string;
+  kind: "state" | "value";
+}
+
+export interface PaixInputReferenceNode {
+  type: "InputReference";
+  name: string;
+}
+
+export interface PaixCallExpressionNode {
+  type: "CallExpression";
+  callee: string;
+  arguments: PaixExpressionNode[];
+}
+
+export interface PaixBinaryExpressionNode {
+  type: "BinaryExpression";
+  operator: "+" | "-";
+  left: PaixExpressionNode;
+  right: PaixExpressionNode;
+}
+
+export interface PaixOtherwiseExpressionNode {
+  type: "OtherwiseExpression";
+  value: PaixExpressionNode;
+  fallback: PaixExpressionNode;
+}
+
+export type PaixExpressionNode =
+  | PaixPrimitive
+  | PaixReferenceNode
+  | PaixInputReferenceNode
+  | PaixCallExpressionNode
+  | PaixBinaryExpressionNode
+  | PaixOtherwiseExpressionNode
+  | PaixComparisonExpressionNode;
+
+export interface PaixArgumentNode {
+  type: "Argument";
+  name: string;
+  state: boolean;
+  value: PaixExpressionNode;
+}
+
+export interface PaixComponentNode {
+  type: "Component";
+  name: string;
+  arguments: PaixArgumentNode[];
+}
+
+export interface PaixAreaReferenceNode {
+  type: "AreaReference";
+  path: string;
+  segments: string[];
+  slots: boolean;
+}
+
+export interface PaixStackNode {
+  type: "Stack";
+  items: PaixComponentNode[];
+}
+
+export interface PaixSinglePlacementNode {
+  type: "Placement";
+  target: PaixAreaReferenceNode;
+  component: PaixComponentNode;
+}
+
+export interface PaixStackPlacementNode {
+  type: "StackPlacement";
+  target: PaixAreaReferenceNode;
+  stack: PaixStackNode;
+}
+
+export type PaixPlacementNode =
+  | PaixSinglePlacementNode
+  | PaixStackPlacementNode;
+
+export interface PaixPageNode {
+  type: "Page";
+  name: string;
+  wireframe: string;
+  placements: PaixPlacementNode[];
+}
+
+export interface PaixStateNode {
+  type: "State";
+  name: string;
+  initialValue: PaixExpressionNode;
+}
+
+export interface PaixStylePropertyNode {
+  type: "StyleProperty";
+  name: string;
+  value: string;
+}
+
+export interface PaixStyleConditionNode {
+  type: "StyleCondition";
+  condition: PaixExpressionNode;
+  properties: PaixStylePropertyNode[];
+}
+
+export interface PaixStyleNode {
+  type: "Style";
+  name: string;
+  properties: PaixStylePropertyNode[];
+  conditions: PaixStyleConditionNode[];
+}
+
+export interface PaixComponentDefinitionNode {
+  type: "ComponentDefinition";
+  name: string;
+  wireframe: string;
+  style: string | null;
+  states: PaixStateNode[];
+  placements: PaixPlacementNode[];
+}
+
+export interface PaixSizeNode {
+  value: number;
+  unit: "px" | "percent";
+}
+
+interface PaixSliceBaseNode {
+  type: "Slice";
+  target: PaixAreaReferenceNode;
+  areas: string[];
+  condition?: PaixSliceConditionNode;
+}
+
+export interface PaixSliceConditionNode {
+  left: string;
+  operator: string;
+  than: string;
+  right: string;
+}
+
+
+export interface PaixSizedSliceNode
+  extends PaixSliceBaseNode {
+  mode:
+    | "vertical"
+    | "horizontal"
+    | "vertical-centered"
+    | "horizontal-centered"
+    | "island";
+
+  size: PaixSizeNode;
+}
+
+export interface PaixComparisonExpressionNode {
+  type: "ComparisonExpression";
+  operator: "is";
+  left: PaixExpressionNode;
+  right: PaixExpressionNode;
+}
+
+export interface PaixRepeatedSliceNode
+  extends PaixSliceBaseNode {
+  mode: "columns" | "rows" | "layer";
+  count: number;
+}
+
+export interface PaixGridSliceNode
+  extends PaixSliceBaseNode {
+  mode: "grid";
+  columns: number;
+  rows: number;
+}
+
+export type PaixSliceNode =
+  | PaixSizedSliceNode
+  | PaixRepeatedSliceNode
+  | PaixGridSliceNode;
+
+export interface PaixWireframeNode {
+  type: "Wireframe";
+  name: string;
+  slices: PaixSliceNode[];
+}
+
+export type PaixDocumentNode =
+  | PaixPageNode
+  | PaixComponentDefinitionNode
+  | PaixWireframeNode
+  | PaixStyleNode;

@@ -1,3 +1,4 @@
+import { isPaixObject, readOwn } from "./collectionValues";
 import type {
   PaixExpressionNode,
 } from "../paix/ast/ast.types";
@@ -19,8 +20,30 @@ export function evaluateExpression(
   }
 
   switch (expression.type) {
+    case "ArrayExpression":
+      return expression.items.map(item => evaluateExpression(item, scope));
+    case "ObjectExpression":
+      return Object.fromEntries(expression.properties.map(property => [property.name, evaluateExpression(property.value, scope)]));
+    case "MemberExpression":
+      return readOwn(evaluateExpression(expression.object, scope), expression.property);
+    case "SelectorExpression": {
+      const source = evaluateExpression(expression.source, scope);
+      if (!Array.isArray(source)) return undefined;
+      if (expression.position !== undefined) {
+        const position = evaluateExpression(expression.position, scope);
+        return typeof position === "number" && Number.isInteger(position) && position >= 1 ? source[position - 1] : undefined;
+      }
+      const criteria = (expression.criteria ?? []).map(criterion => ({ name: criterion.name, value: evaluateExpression(criterion.value, scope) }));
+      // Missing selector values never match absent fields accidentally.
+      const matches = source.filter(item => isPaixObject(item) && criteria.every(criterion => criterion.value !== undefined && Object.hasOwn(item, criterion.name) && item[criterion.name] === criterion.value));
+      if (criteria.some(criterion => criterion.name === "id")) {
+        if (matches.length > 1) throw new Error("Selection by id matched multiple objects; ids must be unique.");
+        return matches[0];
+      }
+      return matches;
+    }
     case "Reference":
-      return scope[expression.name];
+      return readOwn(scope, expression.name);
 
     case "InputReference": {
       const inputs =
@@ -33,9 +56,7 @@ export function evaluateExpression(
         return undefined;
       }
 
-      return (
-        inputs as Record<string, unknown>
-      )[expression.name];
+      return readOwn(inputs, expression.name);
     }
 
     case "OtherwiseExpression": {

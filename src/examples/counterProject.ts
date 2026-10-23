@@ -1,3 +1,4 @@
+import { collectionExampleFiles } from "./collectionProject";
 import type { PaixProject } from "../project/project.types";
 
 export const counterProject: PaixProject = {
@@ -5,7 +6,7 @@ export const counterProject: PaixProject = {
   name: "counter-app",
   entry: "pages/home.paix",
 
-  files: {"wireframes/WireframeLab.paix": {
+  files: { ...collectionExampleFiles,"wireframes/WireframeLab.paix": {
   id: "wireframe-lab",
   name: "WireframeLab.paix",
   path: "wireframes/WireframeLab.paix",

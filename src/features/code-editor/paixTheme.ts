@@ -6,6 +6,7 @@ export function registerPaixTheme(monaco: Monaco) {
     inherit: true,
 
     rules: [
+      { token: "collection", foreground: "5EEAD4", fontStyle: "bold" },
       {
         token: "keyword",
         foreground: "4DAEFF",

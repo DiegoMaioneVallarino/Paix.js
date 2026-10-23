@@ -26,6 +26,8 @@ StateKeyword,
 Dot,
 LeftBracket,
 RightBracket,
+LeftBrace,
+RightBrace,
 WireframeKeyword,
 SliceKeyword,
 VerticalKeyword,
@@ -512,7 +514,7 @@ private stack = this.RULE("stack", () => {
           SEP: Comma,
 
           DEF: () => {
-            this.SUBRULE(this.argument);
+            this.SUBRULE(this.componentArgument);
           },
         });
       });
@@ -520,6 +522,13 @@ private stack = this.RULE("stack", () => {
       this.CONSUME(RightParenthesis);
     },
   );
+
+  private componentArgument = this.RULE("componentArgument", () => {
+    this.OR([
+      { GATE: () => this.LA(2).tokenType === Colon, ALT: () => this.SUBRULE(this.argument) },
+      { ALT: () => this.SUBRULE(this.expression) },
+    ]);
+  });
 
   private argument = this.RULE(
   "argument",
@@ -587,7 +596,7 @@ private comparisonExpression = this.RULE(
 private additiveExpression = this.RULE(
   "additiveExpression",
   () => {
-    this.SUBRULE(this.primary, {
+    this.SUBRULE(this.postfixExpression, {
       LABEL: "operand",
     });
 
@@ -607,7 +616,7 @@ private additiveExpression = this.RULE(
         },
       ]);
 
-      this.SUBRULE2(this.primary, {
+      this.SUBRULE2(this.postfixExpression, {
         LABEL: "operand",
       });
     });
@@ -615,8 +624,53 @@ private additiveExpression = this.RULE(
 );
 
 
+private postfixExpression = this.RULE("postfixExpression", () => {
+  this.SUBRULE(this.primary);
+  this.MANY(() => {
+    this.OR([
+      { ALT: () => this.SUBRULE(this.memberSuffix, { LABEL: "suffix" }) },
+      { ALT: () => this.SUBRULE(this.selectorSuffix, { LABEL: "suffix" }) },
+    ]);
+  });
+});
+private memberSuffix = this.RULE("memberSuffix", () => {
+  this.CONSUME(Dot);
+  this.CONSUME(Identifier, { LABEL: "property" });
+});
+private selectorSuffix = this.RULE("selectorSuffix", () => {
+  this.CONSUME(LeftBrace);
+  this.OR([
+    { GATE: () => this.LA(2).tokenType === Colon,
+      ALT: () => this.AT_LEAST_ONE_SEP({ SEP: Comma, DEF: () => this.SUBRULE(this.objectProperty) }) },
+    { ALT: () => this.SUBRULE(this.expression, { LABEL: "position" }) },
+  ]);
+  this.CONSUME(RightBrace);
+});
+private arrayExpression = this.RULE("arrayExpression", () => {
+  this.CONSUME(LeftBracket);
+  this.MANY_SEP({ SEP: Comma, DEF: () => this.SUBRULE(this.expression) });
+  this.CONSUME(RightBracket);
+});
+private objectExpression = this.RULE("objectExpression", () => {
+  this.CONSUME(LeftBrace);
+  this.MANY_SEP({ SEP: Comma, DEF: () => this.SUBRULE(this.objectProperty) });
+  this.CONSUME(RightBrace);
+});
+private objectProperty = this.RULE("objectProperty", () => {
+  this.OR([
+    { ALT: () => this.CONSUME(Identifier, { LABEL: "propertyName" }) },
+    { ALT: () => this.CONSUME(StringLiteral, { LABEL: "propertyName" }) },
+    { ALT: () => this.CONSUME(StyleKeyword, { LABEL: "propertyName" }) },
+    { ALT: () => this.CONSUME(StateIdentifier, { LABEL: "propertyName" }) },
+  ]);
+  this.CONSUME(Colon);
+  this.SUBRULE(this.expression);
+});
+
 private primary = this.RULE("primary", () => {
   this.OR([
+    { ALT: () => this.SUBRULE(this.arrayExpression) },
+    { ALT: () => this.SUBRULE(this.objectExpression) },
     {
       ALT: () =>
         this.SUBRULE(this.inputReference),

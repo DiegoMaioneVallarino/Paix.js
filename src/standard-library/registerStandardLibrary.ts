@@ -10,9 +10,9 @@ export function registerStandardLibrary(): void {
     return;
   }
 
-  componentRegistry.register("Text", Text);
-  componentRegistry.register("Button", Button);
-  componentRegistry.register("Container", Container);
+  componentRegistry.register("Text", Text, ["value", "className"]);
+  componentRegistry.register("Button", Button, ["label", "disabled", "onClick", "className"]);
+  componentRegistry.register("Container", Container, ["children", "className"]);
 
   standardLibraryRegistered = true;
 }

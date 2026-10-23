@@ -1,3 +1,4 @@
+import { inferComponentInputs, resolveComponentArguments } from "./resolveComponentArguments";
 import { useEffect, type CSSProperties } from "react";
 import { usePreviewRuntime } from "./PreviewRuntime";
 import type {
@@ -17,14 +18,9 @@ import {
   type PaixRuntimeProps,
 } from "./ComponentRegistry";
 import {
-  evaluateExpression,
   PAIX_INPUTS_SCOPE_KEY,
   type PaixScope,
 } from "./evaluateExpression";
-import {
-  isPaixEventArgument,
-  resolvePaixEvent,
-} from "./EventRuntime";
 import {
   usePaixState,
   type PaixStateSetter,
@@ -275,16 +271,18 @@ function RuntimeComponent({
   setState,
 }: RuntimeComponentProps) {
   const preview = usePreviewRuntime();
-  const directStyleName =
-    getDirectStyleName(component);
-  const invocationValues =
-    evaluateArguments(
-      component,
-      scope,
-      setState,
-    );
-  const NativeComponent =
-    componentRegistry.get(component.name);
+  const NativeComponent = componentRegistry.get(component.name);
+  const definition = program.components[component.name];
+  const explicitStyleName = getDirectStyleName(component);
+  const acceptedInputs = NativeComponent
+    ? new Set(componentRegistry.getAcceptedInputs?.(component.name) ?? [])
+    : definition ? inferComponentInputs(definition, program.styles[explicitStyleName ?? definition.style ?? ""]) : new Set<string>();
+  let invocationValues: PaixScope;
+  try { invocationValues = resolveComponentArguments(component, scope, acceptedInputs, setState); }
+  catch (error) { return <div className="paix-runtime-error">{error instanceof Error ? error.message : String(error)}</div>; }
+  const directStyleName = typeof invocationValues.style === "string" ? invocationValues.style : undefined;
+  delete invocationValues.style;
+
   if (NativeComponent) {
     const directStyle =
       directStyleName
@@ -322,8 +320,6 @@ function RuntimeComponent({
       />
     );
   }
-  const definition =
-    program.components[component.name];
   if (!definition) {
     return (
       <UnknownComponent
@@ -382,6 +378,7 @@ function UserDefinedComponent({
   };
   const {
     values: stateValues,
+    error: stateError,
     setValue: setState,
   } = usePaixState(
     definition.states,
@@ -459,6 +456,7 @@ function UserDefinedComponent({
         resolvedStyleName
       }
     >
+      {stateError && <div className="paix-runtime-error">{stateError}</div>}
       <ScopedWireframe
   wireframe={wireframe}
   placements={definition.placements}
@@ -492,44 +490,6 @@ export function PaixComponentPreview({
         inspect
       />
     </div>
-  );
-}
-function evaluateArguments(
-  component: PaixComponentNode,
-  scope: PaixScope,
-  setState?: PaixStateSetter,
-): PaixScope {
-  return Object.fromEntries(
-    component.arguments
-      .filter(
-        (argument) =>
-          argument.name !== "style",
-      )
-      .map((argument) => {
-        if (
-          isPaixEventArgument(
-            argument.name,
-          )
-        ) {
-          return [
-            argument.name,
-            resolvePaixEvent(
-              argument.value,
-              {
-                scope,
-                setState,
-              },
-            ),
-          ];
-        }
-        return [
-          argument.name,
-          evaluateExpression(
-            argument.value,
-            scope,
-          ),
-        ];
-      }),
   );
 }
 function getDirectStyleName(

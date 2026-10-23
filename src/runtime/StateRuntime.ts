@@ -1,3 +1,4 @@
+import { validateCollectionValue } from "./collectionValues";
 import {
   useCallback,
   useState,
@@ -23,43 +24,33 @@ export type PaixStateSetter = (
 interface PaixStateRuntime {
   values: PaixStateValues;
   setValue: PaixStateSetter;
+  error: string | null;
 }
 
 export function usePaixState(
   definitions: PaixStateNode[],
   initialScope: PaixScope,
 ): PaixStateRuntime {
-  const [values, setValues] =
-    useState<PaixStateValues>(() =>
-      createInitialState(
-        definitions,
-        initialScope,
-      ),
-    );
-
+  const [runtime, setRuntime] = useState<{ values: PaixStateValues; error: string | null }>(() => {
+    try { return { values: createInitialState(definitions, initialScope), error: null }; }
+    catch (error) { return { values: {}, error: error instanceof Error ? error.message : String(error) }; }
+  });
   const setValue = useCallback<PaixStateSetter>(
     (stateName, value) => {
-      setValues((currentValues) => {
-        if (
-          Object.is(
-            currentValues[stateName],
-            value,
-          )
-        ) {
-          return currentValues;
-        }
-
-        return {
-          ...currentValues,
-          [stateName]: value,
-        };
+      setRuntime(current => {
+        if (!Object.hasOwn(current.values, stateName)) return current;
+        try { validateCollectionValue(stateName, value); }
+        catch (error) { return { ...current, error: error instanceof Error ? error.message : String(error) }; }
+        if (Object.is(current.values[stateName], value) && current.error === null) return current;
+        return { values: { ...current.values, [stateName]: value }, error: null };
       });
     },
     [],
   );
 
   return {
-    values,
+    values: runtime.values,
+    error: runtime.error,
     setValue,
   };
 }
@@ -81,6 +72,7 @@ export function createInitialState(
         definition.initialValue,
         evaluationScope,
       );
+    validateCollectionValue(definition.name, values[definition.name]);
   }
 
   return values;

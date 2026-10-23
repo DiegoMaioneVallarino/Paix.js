@@ -13,7 +13,7 @@ export function Button(props: PaixRuntimeProps) {
   return (
     <button
       type="button"
-      className="paix-button"
+      className={["paix-button", typeof props.className === "string" ? props.className : ""].filter(Boolean).join(" ")}
       disabled={disabled}
       onClick={onClick}
     >
