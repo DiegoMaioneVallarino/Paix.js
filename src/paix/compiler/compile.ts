@@ -1,3 +1,4 @@
+import { parsePaixActions } from "../parser/parseActions";
 import type { PaixProject } from "../../project/project.types";
 import { parsePaixComponent } from "../parser/parseComponent";
 import { parsePaixPage } from "../parser/parse";
@@ -66,6 +67,7 @@ const componentSourcePaths: Record<
 
     const componentResult = parsePaixComponent(
       file.content,
+      file.path,
     );
 
     diagnostics.push(
@@ -110,6 +112,7 @@ componentSourcePaths[componentName] = file.path;
 
     const wireframeResult = parsePaixWireframe(
       file.content,
+      file.path,
     );
 
     diagnostics.push(
@@ -161,7 +164,7 @@ for (
   }
 
   const styleResult =
-    parsePaixStyle(file.content);
+    parsePaixStyle(file.content, file.path);
 
   diagnostics.push(
     ...styleResult.diagnostics.map(
@@ -209,6 +212,56 @@ for (
 
   styles[styleName] =
     styleResult.ast;
+}
+
+// Companion files bind by exact sibling path; their display headers are optional.
+for (const [name, component] of Object.entries(components)) {
+  const path = componentSourcePaths[name];
+  const folder = path.slice(0, path.lastIndexOf("/"));
+  const fileName = path.slice(path.lastIndexOf("/") + 1);
+  const associated = fileName === `${name}.paix` && folder.endsWith(`/${name}`);
+  if (!associated) {
+    if (!/^\s*component\b/m.test(project.files[path].content)) diagnostics.push({ source: "semantic", severity: "error", message: `Place this component at components/${name}/${name}.paix to associate its companions.`, line: 1, column: 1, length: 1, filePath: path });
+    continue; // Compatibility for existing flat projects.
+  }
+  const diagnostic = (message: string, filePath = path) => diagnostics.push({ source: "semantic", severity: "error", message, line: 1, column: 1, length: 1, filePath });
+  const frameFile = project.files[`${folder}/${name}.frame.paix`];
+  if (!frameFile || frameFile.type !== "wireframe") diagnostic(`Component "${name}" requires sibling "${name}.frame.paix".`);
+  else {
+    const parsed = parsePaixWireframe(frameFile.content, frameFile.path);
+    if (parsed.ast) component.wireframe = parsed.ast.name;
+  }
+  const styleFile = project.files[`${folder}/${name}.style.paix`];
+  component.style = null;
+  if (styleFile) {
+    if (styleFile.type !== "style") diagnostic(`"${styleFile.path}" must have type "style".`);
+    else component.style = parsePaixStyle(styleFile.content, styleFile.path).ast?.name ?? null;
+  }
+  const actionsFile = project.files[`${folder}/${name}.actions.paix`];
+  if (component.states.length) diagnostic("Move component states to its .actions.paix file.");
+  component.states = [];
+  component.actions = [];
+  if (actionsFile) {
+    if (actionsFile.type !== "action") diagnostic(`"${actionsFile.path}" must have type "action".`);
+    else {
+      const parsed = parsePaixActions(actionsFile.content, actionsFile.path);
+      if (parsed.ast) { component.states = parsed.ast.states; component.actions = parsed.ast.actions; }
+    }
+  }
+  for (const placement of component.placements) {
+    const children = placement.type === "Placement" ? [placement.component] : placement.stack.items;
+    for (const child of children) for (const argument of child.arguments) {
+      const value = argument.value;
+      if (argument.type === "Argument" && /^on[A-Z]/.test(argument.name) && value && typeof value === "object" && value.type === "MemberExpression" && value.object && typeof value.object === "object" && value.object.type === "Reference" && value.object.name === "actions" && !component.actions.some(action => action.name === value.property)) {
+        diagnostic(`Unknown action "actions.${value.property}" in component "${name}".`);
+      }
+    }
+  }
+}
+for (const file of Object.values(project.files)) {
+  if (file.type !== "action") continue;
+  const parsed = parsePaixActions(file.content, file.path);
+  diagnostics.push(...parsed.diagnostics.map(diagnostic => ({ ...diagnostic, filePath: file.path })));
 }
 
 for (

@@ -6,7 +6,7 @@ import type {
 import { paixParser } from "../parser/grammar";
 
 import type {
-  PaixArgumentNode,
+  PaixArgumentNode, PaixActionsNode, PaixActionNode,
   PaixComponentArgumentNode,
   PaixCallExpressionNode,
   PaixComponentNode,
@@ -82,7 +82,7 @@ public style(ctx: CstChildren): PaixStyleNode {
 
   return {
     type: "Style",
-    name: parseString(nameToken.image),
+    name: nameToken ? parseString(nameToken.image) : "",
 
     properties: propertyNodes.map((node) =>
       this.visit(node),
@@ -150,8 +150,8 @@ public styleValueAtom(
 
     return {
       type: "Page",
-      name: parseString(nameToken.image),
-      wireframe: wireframeToken.image,
+      name: nameToken ? parseString(nameToken.image) : "",
+      wireframe: wireframeToken?.image ?? "",
 
       placements: placements.map((node) =>
         this.visit(node),
@@ -180,7 +180,7 @@ public wireframe(
 
   return {
     type: "Wireframe",
-    name: parseString(nameToken.image),
+    name: nameToken ? parseString(nameToken.image) : "",
 
     slices: sliceNodes.map(
       (node) => this.visit(node) as PaixSliceNode,
@@ -381,8 +381,8 @@ const style = styleSection
 
   return {
   type: "ComponentDefinition",
-  name: parseString(nameToken.image),
-  wireframe: wireframeToken.image,
+  name: nameToken ? parseString(nameToken.image) : "",
+  wireframe: wireframeToken?.image ?? "",
   style,
   states,
 
@@ -439,13 +439,9 @@ public stateDeclaration(
     };
   }
 
-  return {
-    type: "Placement",
-    target,
-    component: this.visit(
-      ctx.componentCall?.[0] as CstNode,
-    ),
-  };
+  const items = ((ctx.componentCall ?? []) as CstNode[]).map(node => this.visit(node));
+  if (target.slots || items.length > 1) return { type: "StackPlacement", target, stack: { type: "Stack", items } };
+  return { type: "Placement", target, component: items[0] };
 }
 
 public areaReference(
@@ -463,7 +459,7 @@ public areaReference(
     path: segments.join("."),
     segments,
     slots:
-      segments[segments.length - 1] === "slots",
+      ["slots", "spaces"].includes(segments[segments.length - 1]),
   };
 }
 
@@ -630,6 +626,8 @@ public additiveExpression(
   ): PaixExpressionNode {
 
 
+if (ctx.stateReference) return this.visit(ctx.stateReference[0] as CstNode);
+if (ctx.ActionsKeyword) return { type: "Reference", name: "actions", kind: "value" };
 if (ctx.arrayExpression) return this.visit(ctx.arrayExpression[0] as CstNode);
 if (ctx.objectExpression) return this.visit(ctx.objectExpression[0] as CstNode);
 if (ctx.inputReference) {
@@ -686,6 +684,25 @@ if (ctx.inputReference) {
     };
 
     return reference;
+  }
+
+  public stateReference(ctx: CstChildren): PaixReferenceNode {
+    return { type: "Reference", name: "_" + (ctx.name[0] as IToken).image, kind: "state" };
+  }
+  public actions(ctx: CstChildren): PaixActionsNode {
+    return { type: "Actions", name: "",
+      states: ((ctx.actionState ?? []) as CstNode[]).map(node => this.visit(node)),
+      actions: ((ctx.actionDeclaration ?? []) as CstNode[]).map(node => this.visit(node)) };
+  }
+  public actionState(ctx: CstChildren): PaixStateNode {
+    return { type: "State", name: "_" + (ctx.name[0] as IToken).image, initialValue: this.visit(ctx.expression[0] as CstNode) };
+  }
+  public actionDeclaration(ctx: CstChildren): PaixActionNode {
+    return { name: (ctx.name[0] as IToken).image, steps: (ctx.actionStep as CstNode[]).map(node => this.visit(node)) };
+  }
+  public actionStep(ctx: CstChildren): PaixActionNode["steps"][number] {
+    return ctx.action ? { action: (ctx.action[0] as IToken).image }
+      : { state: "_" + (ctx.state[0] as IToken).image, value: this.visit(ctx.expression[0] as CstNode) };
   }
 
   public functionCall(

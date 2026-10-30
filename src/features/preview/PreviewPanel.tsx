@@ -51,10 +51,10 @@ function PreviewSession({
   const [snapshot, setSnapshot] = useState<PreviewSnapshot | null>(null);
   const publish = useCallback((next: PreviewSnapshot | null) => setSnapshot(next), []);
   const context = useMemo(() => ({ interaction, publish }), [interaction, publish]);
-  const inspect = activeFileType === "component" || activeFileType === "style";
+  const inspect = (activeFileType === "component" || activeFileType === "action") || activeFileType === "style";
   let content;
 
-  if (activeFileType === "component") {
+  if ((activeFileType === "component" || activeFileType === "action")) {
     content = inspectedComponent ? (
       <PaixComponentPreview
         definition={inspectedComponent}
@@ -111,7 +111,7 @@ function PreviewSession({
               <summary>{activeFileType === "style" ? "Valores de prueba" : "Estados"} ({Object.keys(snapshot?.values ?? {}).length})</summary>
               <div className="paix-preview-state-list">
                 {Object.entries(snapshot?.values ?? {}).map(([name, value]) => <label key={name}>
-                  <span>{name}</span>
+                  <span>{name.startsWith("_") ? `states.${name.slice(1)}` : name.replace(/^this\./, "inputs.")}</span>
                   {typeof value === "boolean" ? <input aria-label={name} type="checkbox" checked={value} onChange={event => snapshot?.setValue(name, event.target.checked)} />
                     : typeof value === "number" ? <input aria-label={name} type="number" step="any" value={value} onChange={event => { if (event.target.value !== "") snapshot?.setValue(name, Number(event.target.value)); }} />
                     : typeof value === "string" ? <input aria-label={name} value={value} onChange={event => snapshot?.setValue(name, event.target.value)} />

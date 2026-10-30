@@ -1,0 +1,715 @@
+import type {
+  CstNode,
+  IToken,
+} from "chevrotain";
+
+import { paixParser } from "../parser/grammar";
+
+import type {
+  PaixArgumentNode,
+  PaixComponentArgumentNode,
+  PaixCallExpressionNode,
+  PaixComponentNode,
+  PaixExpressionNode,
+  PaixPageNode,
+  PaixPlacementNode,
+  PaixReferenceNode,
+  PaixComponentDefinitionNode,
+PaixStateNode,
+PaixAreaReferenceNode,
+PaixStackNode,
+PaixSizeNode,
+PaixSliceNode,
+PaixSliceConditionNode,
+PaixWireframeNode,
+PaixInputReferenceNode,
+PaixStyleNode,
+PaixStylePropertyNode,
+PaixStyleConditionNode,
+
+} from "./ast.types";
+
+type CstChildren = CstNode["children"];
+
+const BasePaixVisitor =
+  paixParser.getBaseCstVisitorConstructor();
+
+class PaixAstVisitor extends BasePaixVisitor {
+  public constructor() {
+    super();
+    this.validateVisitor();
+  }
+public componentStyleSection(
+  ctx: CstChildren,
+): string {
+  const styleName =
+    ctx.styleName?.[0] as IToken;
+
+  return styleName.image;
+}
+
+public sliceCondition(
+  ctx: CstChildren,
+): PaixSliceConditionNode {
+  return {
+    left: (
+      ctx.leftDimension?.[0] as IToken
+    ).image,
+
+    operator: (
+      ctx.comparison?.[0] as IToken
+    ).image,
+
+    than: (
+      ctx.thanWord?.[0] as IToken
+    ).image,
+
+    right: (
+      ctx.rightDimension?.[0] as IToken
+    ).image,
+  };
+}
+
+public style(ctx: CstChildren): PaixStyleNode {
+  const nameToken =
+    ctx.StringLiteral?.[0] as IToken;
+
+  const propertyNodes =
+    (ctx.styleDeclaration ?? []) as CstNode[];
+
+  const conditionNodes =
+    (ctx.styleCondition ?? []) as CstNode[];
+
+  return {
+    type: "Style",
+    name: parseString(nameToken.image),
+
+    properties: propertyNodes.map((node) =>
+      this.visit(node),
+    ),
+
+    conditions: conditionNodes.map((node) =>
+      this.visit(node),
+    ),
+  };
+}
+
+public styleDeclaration(
+  ctx: CstChildren,
+): PaixStylePropertyNode {
+  const propertyName =
+    ctx.propertyName?.[0] as IToken;
+
+  const valueNodes =
+    (ctx.styleValueAtom ?? []) as CstNode[];
+
+  return {
+    type: "StyleProperty",
+    name: propertyName.image,
+
+    value: valueNodes
+      .map((node) => this.visit(node) as string)
+      .join(" "),
+  };
+}
+
+public styleCondition(
+  ctx: CstChildren,
+): PaixStyleConditionNode {
+  const condition =
+    ctx.condition?.[0] as CstNode;
+
+  const propertyNodes =
+    (ctx.styleDeclaration ?? []) as CstNode[];
+
+  return {
+    type: "StyleCondition",
+    condition: this.visit(condition),
+
+    properties: propertyNodes.map((node) =>
+      this.visit(node),
+    ),
+  };
+}
+
+public styleValueAtom(
+  ctx: CstChildren,
+): string {
+  const token =
+    ctx.valueToken?.[0] as IToken;
+
+  return token.image;
+}
+  public page(ctx: CstChildren): PaixPageNode {
+    const nameToken = ctx.StringLiteral?.[0] as IToken;
+    const wireframeToken =
+      ctx.wireframe?.[0] as IToken;
+
+    const placements =
+      (ctx.placement ?? []) as CstNode[];
+
+    return {
+      type: "Page",
+      name: parseString(nameToken.image),
+      wireframe: wireframeToken.image,
+
+      placements: placements.map((node) =>
+        this.visit(node),
+      ),
+    };
+  }
+public inputReference(
+  ctx: CstChildren,
+): PaixInputReferenceNode {
+  const inputName =
+    ctx.inputName?.[0] as IToken;
+
+  return {
+    type: "InputReference",
+    name: inputName.image,
+  };
+}
+public wireframe(
+  ctx: CstChildren,
+): PaixWireframeNode {
+  const nameToken =
+    ctx.StringLiteral?.[0] as IToken;
+
+  const sliceNodes =
+    (ctx.sliceDeclaration ?? []) as CstNode[];
+
+  return {
+    type: "Wireframe",
+    name: parseString(nameToken.image),
+
+    slices: sliceNodes.map(
+      (node) => this.visit(node) as PaixSliceNode,
+    ),
+  };
+}
+
+public sliceDeclaration(
+  ctx: CstChildren,
+): PaixSliceNode {
+  const targetNode =
+    ctx.target?.[0] as CstNode;
+
+  const target = this.visit(
+    targetNode,
+  ) as PaixAreaReferenceNode;
+
+
+const conditionNode =
+  ctx.sliceCondition?.[0] as
+    | CstNode
+    | undefined;
+
+const condition = conditionNode
+  ? (this.visit(
+      conditionNode,
+    ) as PaixSliceConditionNode)
+  : undefined;
+
+const conditionFields = condition
+  ? { condition }
+  : {};
+
+
+
+  const areas = (
+    (ctx.areaName ?? []) as IToken[]
+  ).map((token) => parseString(token.image));
+
+  if (ctx.VerticalKeyword) {
+    return {
+      type: "Slice",
+      target,
+
+      mode: ctx.CenteredKeyword
+        ? "vertical-centered"
+        : "vertical",
+
+      size: this.visit(
+        ctx.sizeValue?.[0] as CstNode,
+      ) as PaixSizeNode,
+
+      areas,
+      ...conditionFields,
+    };
+  }
+
+  if (ctx.HorizontalKeyword) {
+    return {
+      type: "Slice",
+      target,
+
+      mode: ctx.CenteredKeyword
+        ? "horizontal-centered"
+        : "horizontal",
+
+      size: this.visit(
+        ctx.sizeValue?.[0] as CstNode,
+      ) as PaixSizeNode,
+
+      areas,
+      ...conditionFields,
+    };
+  }
+
+  if (ctx.ColumnsKeyword || ctx.RowsKeyword) {
+    const countToken =
+      ctx.count?.[0] as IToken;
+
+    return {
+      type: "Slice",
+      target,
+
+      mode: ctx.ColumnsKeyword
+        ? "columns"
+        : "rows",
+
+      count: Number(countToken.image),
+      areas,
+      ...conditionFields,
+    };
+  }
+
+  if (ctx.GridKeyword) {
+    const gridToken =
+      ctx.GridSizeLiteral?.[0] as IToken;
+
+    const [columns, rows] = gridToken.image
+      .split("x")
+      .map(Number);
+
+    return {
+      type: "Slice",
+      target,
+      mode: "grid",
+      columns,
+      rows,
+      areas,
+      ...conditionFields,
+    };
+  }
+
+  if (ctx.IslandKeyword) {
+    return {
+      type: "Slice",
+      target,
+      mode: "island",
+
+      size: this.visit(
+        ctx.sizeValue?.[0] as CstNode,
+      ) as PaixSizeNode,
+
+      areas,
+      ...conditionFields,
+    };
+  }
+
+  const countToken =
+    ctx.count?.[0] as IToken;
+
+  return {
+    type: "Slice",
+    target,
+    mode: "layer",
+    count: Number(countToken.image),
+    areas,
+    ...conditionFields,
+  };
+}
+
+
+
+
+public sizeValue(
+  ctx: CstChildren,
+): PaixSizeNode {
+  const token = (
+    ctx.SizeLiteral?.[0] ??
+    ctx.NumberLiteral?.[0]
+  ) as IToken;
+
+  if (token.image.endsWith("%")) {
+    return {
+      value: Number(token.image.slice(0, -1)),
+      unit: "percent",
+    };
+  }
+
+  const numericValue = token.image.endsWith("px")
+    ? token.image.slice(0, -2)
+    : token.image;
+
+  return {
+    value: Number(numericValue),
+    unit: "px",
+  };
+}
+
+public component(
+  ctx: CstChildren,
+): PaixComponentDefinitionNode {
+  const nameToken =
+    ctx.StringLiteral?.[0] as IToken;
+
+  const wireframeToken =
+    ctx.wireframe?.[0] as IToken;
+const styleSection =
+  ctx.componentStyleSection?.[0] as
+    | CstNode
+    | undefined;
+
+const style = styleSection
+  ? (this.visit(styleSection) as string)
+  : null;
+  const stateSection =
+    ctx.stateSection?.[0] as
+      | CstNode
+      | undefined;
+
+  const placements =
+    (ctx.placement ?? []) as CstNode[];
+
+  const states = stateSection
+    ? (this.visit(
+        stateSection,
+      ) as PaixStateNode[])
+    : [];
+
+  return {
+  type: "ComponentDefinition",
+  name: parseString(nameToken.image),
+  wireframe: wireframeToken.image,
+  style,
+  states,
+
+  placements: placements.map((node) =>
+    this.visit(node),
+  ),
+};
+}
+
+public stateSection(
+  ctx: CstChildren,
+): PaixStateNode[] {
+  const declarations =
+    (ctx.stateDeclaration ?? []) as CstNode[];
+
+  return declarations.map((node) =>
+    this.visit(node),
+  );
+}
+
+public stateDeclaration(
+  ctx: CstChildren,
+): PaixStateNode {
+  const name =
+    ctx.stateName?.[0] as IToken;
+
+  const expression =
+    ctx.expression?.[0] as CstNode;
+
+  return {
+    type: "State",
+    name: name.image,
+    initialValue: this.visit(expression),
+  };
+}
+
+  public placement(
+  ctx: CstChildren,
+): PaixPlacementNode {
+  const targetNode =
+    ctx.areaReference?.[0] as CstNode;
+
+  const target = this.visit(
+    targetNode,
+  ) as PaixAreaReferenceNode;
+
+  if (ctx.stack) {
+    return {
+      type: "StackPlacement",
+      target,
+      stack: this.visit(
+        ctx.stack[0] as CstNode,
+      ),
+    };
+  }
+
+  return {
+    type: "Placement",
+    target,
+    component: this.visit(
+      ctx.componentCall?.[0] as CstNode,
+    ),
+  };
+}
+
+public areaReference(
+  ctx: CstChildren,
+): PaixAreaReferenceNode {
+  const segmentTokens =
+    (ctx.segment ?? []) as IToken[];
+
+  const segments = segmentTokens.map(
+    (token) => token.image,
+  );
+
+  return {
+    type: "AreaReference",
+    path: segments.join("."),
+    segments,
+    slots:
+      segments[segments.length - 1] === "slots",
+  };
+}
+
+public stack(ctx: CstChildren): PaixStackNode {
+  const componentNodes =
+    (ctx.componentCall ?? []) as CstNode[];
+
+  return {
+    type: "Stack",
+
+    items: componentNodes.map((node) =>
+      this.visit(node),
+    ),
+  };
+}
+
+  public componentCall(
+    ctx: CstChildren,
+  ): PaixComponentNode {
+    const nameToken =
+      ctx.componentName?.[0] as IToken;
+
+    const argumentsList =
+      (ctx.componentArgument ?? []) as CstNode[];
+
+    return {
+      type: "Component",
+      name: nameToken.image,
+
+      arguments: argumentsList.map((node) =>
+        this.visit(node),
+      ),
+    };
+  }
+
+  public componentArgument(ctx: CstChildren): PaixComponentArgumentNode {
+    if (ctx.argument) return this.visit(ctx.argument[0] as CstNode);
+    return { type: "ObjectArgument", value: this.visit(ctx.expression[0] as CstNode) };
+  }
+  public arrayExpression(ctx: CstChildren): PaixExpressionNode {
+    return { type: "ArrayExpression", items: ((ctx.expression ?? []) as CstNode[]).map(node => this.visit(node)) };
+  }
+  public objectProperty(ctx: CstChildren): { name: string; value: PaixExpressionNode } {
+    const token = ctx.propertyName[0] as IToken;
+    return { name: token.image.startsWith('"') ? parseString(token.image) : token.image, value: this.visit(ctx.expression[0] as CstNode) };
+  }
+  public objectExpression(ctx: CstChildren): PaixExpressionNode {
+    return { type: "ObjectExpression", properties: ((ctx.objectProperty ?? []) as CstNode[]).map(node => this.visit(node)) };
+  }
+  public memberSuffix(ctx: CstChildren): string { return (ctx.property[0] as IToken).image; }
+  public selectorSuffix(ctx: CstChildren): { position?: PaixExpressionNode; criteria?: { name: string; value: PaixExpressionNode }[] } {
+    return ctx.position ? { position: this.visit(ctx.position[0] as CstNode) }
+      : { criteria: ((ctx.objectProperty ?? []) as CstNode[]).map(node => this.visit(node)) };
+  }
+  public postfixExpression(ctx: CstChildren): PaixExpressionNode {
+    let result = this.visit(ctx.primary[0] as CstNode) as PaixExpressionNode;
+    for (const suffix of (ctx.suffix ?? []) as CstNode[]) {
+      if (suffix.name === "memberSuffix") result = { type: "MemberExpression", object: result, property: this.visit(suffix) };
+      else result = { type: "SelectorExpression", source: result, ...this.visit(suffix) };
+    }
+    return result;
+  }
+
+  public argument(
+    ctx: CstChildren,
+  ): PaixArgumentNode {
+    const nameToken =
+      ctx.argumentName?.[0] as IToken;
+
+    const expression =
+      ctx.expression?.[0] as CstNode;
+
+    return {
+      type: "Argument",
+      name: nameToken.image,
+      state: nameToken.image.startsWith("_"),
+      value: this.visit(expression),
+    };
+  }
+
+public expression(
+  ctx: CstChildren,
+): PaixExpressionNode {
+  const value = this.visit(
+    ctx.value[0] as CstNode,
+  ) as PaixExpressionNode;
+
+  const fallbackNode =
+    ctx.fallback?.[0] as CstNode | undefined;
+
+  if (!fallbackNode) {
+    return value;
+  }
+
+  return {
+    type: "OtherwiseExpression",
+    value,
+    fallback: this.visit(
+      fallbackNode,
+    ) as PaixExpressionNode,
+  };
+}
+
+public comparisonExpression(
+  ctx: CstChildren,
+): PaixExpressionNode {
+  const left = this.visit(
+    ctx.left[0] as CstNode,
+  ) as PaixExpressionNode;
+
+  const rightNode =
+    ctx.right?.[0] as CstNode | undefined;
+
+  if (!rightNode) {
+    return left;
+  }
+
+  return {
+    type: "ComparisonExpression",
+    operator: "is",
+    left,
+    right: this.visit(
+      rightNode,
+    ) as PaixExpressionNode,
+  };
+}
+
+public additiveExpression(
+  ctx: CstChildren,
+): PaixExpressionNode {
+  const operands =
+    ctx.operand as CstNode[];
+
+  const operators =
+    (ctx.operator ?? []) as IToken[];
+
+  let result = this.visit(
+    operands[0],
+  ) as PaixExpressionNode;
+
+  for (
+    let index = 0;
+    index < operators.length;
+    index += 1
+  ) {
+    result = {
+      type: "BinaryExpression",
+      operator: operators[index].image as "+" | "-",
+      left: result,
+      right: this.visit(
+        operands[index + 1],
+      ) as PaixExpressionNode,
+    };
+  }
+
+  return result;
+}
+
+
+
+
+  public primary(
+    ctx: CstChildren,
+  ): PaixExpressionNode {
+
+
+if (ctx.arrayExpression) return this.visit(ctx.arrayExpression[0] as CstNode);
+if (ctx.objectExpression) return this.visit(ctx.objectExpression[0] as CstNode);
+if (ctx.inputReference) {
+  return this.visit(
+    ctx.inputReference[0] as CstNode,
+  );
+}    if (ctx.functionCall) {
+      return this.visit(
+        ctx.functionCall[0] as CstNode,
+      );
+    }
+
+    if (ctx.StringLiteral) {
+      const token = ctx.StringLiteral[0] as IToken;
+      return parseString(token.image);
+    }
+
+    if (ctx.NumberLiteral) {
+      const token = ctx.NumberLiteral[0] as IToken;
+      return Number(token.image);
+    }
+
+    if (ctx.TrueKeyword) {
+      return true;
+    }
+
+    if (ctx.FalseKeyword) {
+      return false;
+    }
+
+    if (ctx.NoneKeyword) {
+      return null;
+    }
+
+    if (ctx.StateIdentifier) {
+      const token =
+        ctx.StateIdentifier[0] as IToken;
+
+      const reference: PaixReferenceNode = {
+        type: "Reference",
+        name: token.image,
+        kind: "state",
+      };
+
+      return reference;
+    }
+
+    const token = ctx.Identifier?.[0] as IToken;
+
+    const reference: PaixReferenceNode = {
+      type: "Reference",
+      name: token.image,
+      kind: "value",
+    };
+
+    return reference;
+  }
+
+  public functionCall(
+    ctx: CstChildren,
+  ): PaixCallExpressionNode {
+    const callee = ctx.callee?.[0] as IToken;
+
+    const argumentsList =
+      (ctx.expression ?? []) as CstNode[];
+
+    return {
+      type: "CallExpression",
+      callee: callee.image,
+
+      arguments: argumentsList.map((node) =>
+        this.visit(node),
+      ),
+    };
+  }
+}
+
+function parseString(value: string): string {
+  return JSON.parse(value) as string;
+}
+
+export const paixAstVisitor =
+  new PaixAstVisitor();

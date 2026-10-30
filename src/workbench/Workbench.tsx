@@ -1,3 +1,4 @@
+import { parsePaixActions } from "../paix/parser/parseActions";
 import { useMemo } from "react";
 
 import { CodeEditor } from "../features/code-editor/CodeEditor";
@@ -48,12 +49,6 @@ export function Workbench() {
     project.files[activeFilePath];
 
 
-const inspectedStyle =
-  activeFile?.type === "style"
-    ? parsePaixStyle(activeFile.content).ast
-    : null;
-
-
   const activeFileIsModified =
     modifiedFiles.includes(activeFilePath);
 
@@ -71,14 +66,17 @@ const inspectedStyle =
     }
 
     if (activeFile.type === "component") {
-      return parsePaixComponent(
-        activeFile.content,
-      );
+      const parsed = parsePaixComponent(activeFile.content, activeFile.path);
+      return { ast: parsed.ast ? compiledProject.components[parsed.ast.name] ?? parsed.ast : null,
+        diagnostics: compiledProject.diagnostics.filter(d => d.filePath === activeFile.path || d.filePath?.startsWith(activeFile.path.replace(/\.paix$/, "."))) };
+
     }
 
+    if (activeFile.type === "action") return parsePaixActions(activeFile.content, activeFile.path);
     if (activeFile.type === "wireframe") {
   const syntaxResult = parsePaixWireframe(
     activeFile.content,
+    activeFile.path,
   );
 
   if (!syntaxResult.ast) {
@@ -101,6 +99,7 @@ const inspectedStyle =
 if (activeFile.type === "style") {
   const syntaxResult = parsePaixStyle(
     activeFile.content,
+    activeFile.path,
   );
 
   if (!syntaxResult.ast) {
@@ -148,8 +147,9 @@ if (activeFile.type === "style") {
       ast: null,
       diagnostics: [],
     };
-  }, [activeFile, project]);
+  }, [activeFile, project, compiledProject]);
 
+  const inspectedStyle = activeFile?.type === "style" && activeAnalysis.ast?.type === "Style" ? activeAnalysis.ast : null;
   const inspectedWireframe: PaixWireframeNode | null =
     activeFile?.type === "wireframe" &&
     activeAnalysis.ast?.type === "Wireframe"
@@ -163,7 +163,9 @@ const inspectedComponent:
     activeAnalysis.ast?.type ===
       "ComponentDefinition"
       ? activeAnalysis.ast
-      : null;
+      : activeFile?.type === "action"
+        ? compiledProject.components[activeFile.name.replace(/\.actions\.paix$/, "")] ?? null
+        : null;
 
 
   if (!activeFile) {
@@ -190,6 +192,8 @@ const inspectedComponent:
     <section className="workbench">
       <header className="workbench-header">
         <div className="brand">
+                  <div className="brandSg">
+
                     <img
                     className="brand-logo"
                     src="/images/logo.png"
@@ -200,6 +204,7 @@ const inspectedComponent:
               p<b className="ai-brand-text">ai</b>x
               <b className="js-type-text">.js</b>
             </strong>
+          </div>
           </div>
         </div>
 

@@ -1,3 +1,4 @@
+import { createComponentActions } from "./componentActions";
 import { inferComponentInputs, resolveComponentArguments } from "./resolveComponentArguments";
 import { useEffect, type CSSProperties } from "react";
 import { usePreviewRuntime } from "./PreviewRuntime";
@@ -394,6 +395,7 @@ function UserDefinedComponent({
     [PAIX_INPUTS_SCOPE_KEY]:
       resolvedInputs,
   };
+  localScope.actions = createComponentActions(definition.actions ?? [], localScope, setState);
   const wireframe =
     program.wireframes[
       definition.wireframe

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { counterProject } from "../examples/counterProject";
 
 import {
   afterEach,
@@ -11,6 +12,8 @@ import {
 import {
   cleanup,
   render,
+  fireEvent,
+  within,
 } from "@testing-library/react";
 
 import type {
@@ -36,7 +39,7 @@ vi.mock("../project/project.store", () => ({
     }) => unknown,
   ) =>
     selector({
-      project: testProject,
+      project: currentProject,
       activeFilePath:
         mockSelection.activeFilePath,
       modifiedFiles: [],
@@ -118,7 +121,10 @@ main >
   },
 };
 
+let currentProject = testProject;
+
 afterEach(() => {
+  currentProject = testProject;
   cleanup();
   mockSelection.activeFilePath =
     "components/Counter.paix";
@@ -191,4 +197,23 @@ describe("Workbench preview", () => {
       ).toBeNull();
     },
   );
+});
+
+test("opens a headerless component with its companions and switches to actions and style previews", () => {
+  currentProject = counterProject;
+  mockSelection.activeFilePath = "components/Counter/Counter.paix";
+  const view = render(<Workbench />);
+  const canvas = () => view.container.querySelector<HTMLElement>(".preview-canvas")!;
+  expect(canvas().querySelector('[data-paix-style="Counter.style"]')).not.toBeNull();
+  fireEvent.click(within(canvas()).getByRole("button", { name: "Add" }));
+  expect(within(canvas()).getByText("1")).toBeTruthy();
+  mockSelection.activeFilePath = "components/Counter/Counter.actions.paix";
+  view.rerender(<Workbench />);
+  expect(canvas().querySelector('[data-paix-component="Counter"]')).not.toBeNull();
+  fireEvent.click(within(canvas()).getByRole("button", { name: "Add" }));
+  expect(within(canvas()).getByText("1")).toBeTruthy();
+  mockSelection.activeFilePath = "components/Counter/Counter.style.paix";
+  view.rerender(<Workbench />);
+  expect(within(canvas()).getByText("Preview text")).toBeTruthy();
+  expect(canvas().querySelector('[data-paix-style-preview="Counter.style"]')).not.toBeNull();
 });

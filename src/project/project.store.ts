@@ -54,6 +54,7 @@ export const useProjectStore =
         openFolders: [
           "pages",
           "components",
+          ...Object.keys(counterProject.files).filter(path => path.startsWith("components/")).map(path => path.slice(0, path.lastIndexOf("/"))),
           "wireframes",
           "styles",
         ],
@@ -151,7 +152,7 @@ export const useProjectStore =
             return result.error;
           }
 
-          const { file, folder } = result;
+          const { file, folder, companions = [] } = result;
 
           set((state) => ({
             project: {
@@ -160,6 +161,7 @@ export const useProjectStore =
               files: {
                 ...state.project.files,
                 [file.path]: file,
+                ...Object.fromEntries(companions.map(companion => [companion.path, companion])),
               },
             },
 
@@ -181,6 +183,7 @@ export const useProjectStore =
                 : [
                     ...state.modifiedFiles,
                     file.path,
+                    ...companions.map(companion => companion.path),
                   ],
           }));
 
@@ -214,6 +217,7 @@ export const useProjectStore =
             openFolders: [
               "pages",
               "components",
+          ...Object.keys(counterProject.files).filter(path => path.startsWith("components/")).map(path => path.slice(0, path.lastIndexOf("/"))),
               "wireframes",
               "styles",
             ],

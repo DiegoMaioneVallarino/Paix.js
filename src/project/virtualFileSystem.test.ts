@@ -26,9 +26,9 @@ const creationCases: Array<{
   {
     type: "component",
     name: "NewsCard",
-    path: "components/NewsCard.paix",
+    path: "components/NewsCard/NewsCard.paix",
     declaration:
-      'component "NewsCard" MainFrame',
+      'main >',
   },
   {
     type: "wireframe",
@@ -94,7 +94,7 @@ describe("Paix virtual file system", () => {
     }
 
     expect(result.file.path).toBe(
-      "components/ArticleCard.paix",
+      "components/ArticleCard/ArticleCard.paix",
     );
   });
 
@@ -137,4 +137,15 @@ describe("Paix virtual file system", () => {
       "must start with a letter",
     );
   });
+});
+test("creates a complete component bundle without overwriting existing companions", () => {
+  const result = createPaixFile(counterProject, "component", "NewCard");
+  if (!result.ok) throw new Error(result.error);
+  expect(result.companions?.map(file => file.path)).toEqual([
+    "components/NewCard/NewCard.frame.paix", "components/NewCard/NewCard.style.paix", "components/NewCard/NewCard.actions.paix",
+  ]);
+  const project = structuredClone(counterProject);
+  const companion = result.companions![0];
+  project.files[companion.path] = companion;
+  expect(createPaixFile(project, "component", "NewCard").ok).toBe(false);
 });

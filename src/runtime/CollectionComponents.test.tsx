@@ -13,7 +13,10 @@ afterEach(cleanup);
 
 function compiled(source: string) {
   const project = structuredClone(collectionProject);
-  project.files["components/CollectionDemo.paix"].content = source;
+  // Keep a flat legacy fixture to verify compatibility with existing projects.
+  delete project.files["components/CollectionDemo/CollectionDemo.paix"];
+  project.files["components/CollectionDemo.paix"] = { id: "legacy-demo", path: "components/CollectionDemo.paix", name: "CollectionDemo.paix", type: "component", content: source };
+  project.files["wireframes/CollectionFrame.paix"] = { id: "legacy-frame", path: "wireframes/CollectionFrame.paix", name: "CollectionFrame.paix", type: "wireframe", content: 'wireframe "CollectionFrame"\nmain slice grid 3x2' };
   const program = compilePaixProject(project);
   expect(program.diagnostics).toEqual([]);
   if (program.components.CollectionDemo.placements.every(placement => !placement.target.slots)) {
@@ -30,7 +33,7 @@ describe("collection inputs in rendered components", () => {
     expect(view.getByRole("button", { name: "Comprar Atlas" })).toBeDisabled();
     expect(view.getByRole("button", { name: "Ver Nova" })).not.toBeDisabled();
     const cards = view.container.querySelectorAll('[data-paix-component="ProductCard"]');
-    expect(cards).toHaveLength(3);
+    expect(cards).toHaveLength(6);
     expect(cards[0]).toHaveTextContent("AuroraPrecio: 120");
     expect(cards[0].className).toContain("--when-0");
     expect(cards[1].className).toContain("--when-1");

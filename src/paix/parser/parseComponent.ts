@@ -13,6 +13,7 @@ export interface PaixComponentParseResult {
 
 export function parsePaixComponent(
   source: string,
+  filePath?: string,
 ): PaixComponentParseResult {
   const lexResult = paixLexer.tokenize(source);
 
@@ -57,6 +58,8 @@ export function parsePaixComponent(
   }
 
   const ast = paixAstVisitor.visit(cst) as PaixComponentDefinitionNode;
+  if (!ast.name && filePath) ast.name = filePath.replace(/\\/g, "/").split("/").at(-1)!.replace(/\.paix$/, "");
+  if (!ast.wireframe && ast.name) ast.wireframe = ast.name + ".frame";
   const collectionDiagnostics = validateCollectionDeclarations(ast, source);
   return { ast: collectionDiagnostics.length ? null : ast, diagnostics: collectionDiagnostics };
 }

@@ -20,6 +20,7 @@ export interface PaixStyleParseResult {
 
 export function parsePaixStyle(
   source: string,
+  filePath?: string,
 ): PaixStyleParseResult {
   const lexResult = paixLexer.tokenize(source);
 
@@ -63,8 +64,10 @@ export function parsePaixStyle(
     };
   }
 
+  const ast = paixAstVisitor.visit(cst) as PaixStyleNode;
+  if (!ast.name && filePath) ast.name = filePath.replace(/\\/g, "/").split("/").at(-1)!.replace(/\.paix$/, "");
   return {
-    ast: paixAstVisitor.visit(cst) as PaixStyleNode,
+    ast,
     diagnostics: [],
   };
 }

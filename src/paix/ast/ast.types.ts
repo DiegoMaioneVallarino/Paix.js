@@ -153,6 +153,7 @@ export interface PaixComponentDefinitionNode {
   wireframe: string;
   style: string | null;
   states: PaixStateNode[];
+  actions?: PaixActionNode[];
   placements: PaixPlacementNode[];
 }
 
@@ -219,7 +220,19 @@ export interface PaixWireframeNode {
   slices: PaixSliceNode[];
 }
 
+export interface PaixActionNode {
+  name: string;
+  steps: Array<{ state: string; value: PaixExpressionNode } | { action: string }>;
+}
+export interface PaixActionsNode {
+  type: "Actions";
+  name: string;
+  states: PaixStateNode[];
+  actions: PaixActionNode[];
+}
+
 export type PaixDocumentNode =
+  | PaixActionsNode
   | PaixPageNode
   | PaixComponentDefinitionNode
   | PaixWireframeNode

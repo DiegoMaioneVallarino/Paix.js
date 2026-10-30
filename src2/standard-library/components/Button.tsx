@@ -1,0 +1,25 @@
+import type { MouseEventHandler } from "react";
+
+import type { PaixRuntimeProps } from "../../runtime/ComponentRegistry";
+
+export function Button(props: PaixRuntimeProps) {
+  const label = props.label ?? "Button";
+  const disabled = props.disabled === true;
+
+  const onClick = typeof props.onClick === "function"
+    ? (props.onClick as MouseEventHandler<HTMLButtonElement>)
+    : undefined;
+
+  return (
+    <button
+      type="button"
+      className={["paix-button", typeof props.className === "string" ? props.className : ""].filter(Boolean).join(" ")}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      <span className="paix-button-label">
+        {String(label)}
+      </span>
+    </button>
+  );
+}

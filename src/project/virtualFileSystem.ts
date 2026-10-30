@@ -6,13 +6,14 @@ import type {
 
 export type CreatablePaixFileType = Extract<
   PaixFileType,
-  "page" | "component" | "wireframe" | "style"
+  "page" | "component" | "wireframe" | "style" | "action"
 >;
 
 interface CreateFileSuccess {
   ok: true;
   file: PaixFile;
   folder: string;
+  companions?: PaixFile[];
 }
 
 interface CreateFileFailure {
@@ -32,6 +33,7 @@ const folderByType: Record<
   component: "components",
   wireframe: "wireframes",
   style: "styles",
+  action: "actions",
 };
 
 export function createPaixFile(
@@ -56,9 +58,20 @@ export function createPaixFile(
     };
   }
 
-  const folder = folderByType[type];
-  const path = `${folder}/${name}.paix`;
+  const owner = Object.values(project.files).find(file => file.type === "component" && file.name === `${name}.paix` && file.path === `components/${name}/${name}.paix`);
+  const suffix = type === "wireframe" ? "frame" : type === "style" ? "style" : "actions";
+  const folder = type === "component" || owner ? `components/${name}` : folderByType[type];
+  const path = owner && type !== "component" ? `${folder}/${name}.${suffix}.paix` : `${folder}/${name}.paix`;
+  if (type === "component" && Object.values(project.files).some(file => file.type === "component" && file.name.toLowerCase() === `${name}.paix`.toLowerCase())) {
+    return { ok: false, error: `Component "${name}" already exists.` };
+  }
 
+  if (type === "component") {
+    const paths = new Set(Object.keys(project.files).map(path => path.toLowerCase()));
+    if (createCompanions(folder, name).some(file => paths.has(file.path.toLowerCase()))) {
+      return { ok: false, error: "A companion file already exists; creation would overwrite it." };
+    }
+  }
   const alreadyExists = Object.keys(
     project.files,
   ).some(
@@ -77,13 +90,13 @@ export function createPaixFile(
   return {
     ok: true,
     folder,
-
+    companions: type === "component" ? createCompanions(folder, name) : [],
     file: {
       id: createFileId(type),
-      name: `${name}.paix`,
+      name: path.split("/").at(-1)!,
       path,
       type,
-      content: createInitialContent(type, name),
+      content: owner && type !== "component" ? "" : createInitialContent(type, name),
     },
   };
 }
@@ -110,7 +123,8 @@ function createInitialContent(
 `;
 
     case "component":
-      return `component "${name}" MainFrame
+      return `main >
+    Text(value: inputs.label / "${name}")
 `;
 
     case "wireframe":
@@ -119,6 +133,14 @@ function createInitialContent(
 main slice horizontal 80 >
     "headerArea"
     "contentArea"
+`;
+
+    case "action":
+      return `states:
+    count: 0
+
+action add:
+    states.count: states.count + 1
 `;
 
     case "style":
@@ -134,4 +156,11 @@ function createFileId(
     `${type}-${Date.now()}-` +
     Math.random().toString(36).slice(2, 8)
   );
+}
+function createCompanions(folder: string, name: string): PaixFile[] {
+  return ([ ["frame", "wireframe", "// Geometry: main is available without slices.\n"],
+    ["style", "style", "color: white\nbackgroundColor: #0d3a5c\nradius: 12\n"],
+    ["actions", "action", "// Define states and actions here.\n"] ] as const).map(([suffix, type, content]) => ({
+      id: createFileId(type), path: `${folder}/${name}.${suffix}.paix`, name: `${name}.${suffix}.paix`, type, content,
+    }));
 }

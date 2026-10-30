@@ -56,7 +56,7 @@ export const NumberLiteral = createToken({
 
 export const OtherwiseKeyword = createToken({
   name: "OtherwiseKeyword",
-  pattern: /otherwise\b/,
+  pattern: /otherwise\b|\//,
 });
 
 export const StateIdentifier = createToken({
@@ -184,7 +184,7 @@ export const RightBracket = createToken({
 
 export const ThisKeyword = createToken({
   name: "ThisKeyword",
-  pattern: /this\b/,
+  pattern: /(?:this|inputs)\b/,
 });
 
 export const StyleKeyword = createToken({
@@ -210,10 +210,15 @@ export const IsKeyword = createToken({
 export const LeftBrace = createToken({ name: "LeftBrace", pattern: /\{/ });
 export const RightBrace = createToken({ name: "RightBrace", pattern: /\}/ });
 
+export const StatesKeyword = createToken({ name: "StatesKeyword", pattern: /states\b/ });
+export const ActionsKeyword = createToken({ name: "ActionsKeyword", pattern: /actions\b/ });
+export const ActionKeyword = createToken({ name: "ActionKeyword", pattern: /action\b/ });
+
 export const allTokens: TokenType[] = [
   WhiteSpace,
   Comment,
 
+  StatesKeyword, ActionsKeyword, ActionKeyword,
   ComponentKeyword,
   WireframeKeyword,
   StyleKeyword,

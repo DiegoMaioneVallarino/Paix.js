@@ -4,7 +4,7 @@ import {
 } from "chevrotain";
 
 import {
-  allTokens,
+  allTokens, StatesKeyword, ActionsKeyword, ActionKeyword,
   Colon,
   Comma,
   FalseKeyword,
@@ -65,8 +65,10 @@ export class PaixParser extends CstParser {
   });
 
 public wireframe = this.RULE("wireframe", () => {
-  this.CONSUME(WireframeKeyword);
-  this.CONSUME(StringLiteral);
+  this.OPTION(() => {
+    this.CONSUME(WireframeKeyword);
+    this.CONSUME(StringLiteral);
+  });
 
   this.MANY(() => {
     this.SUBRULE(this.sliceDeclaration);
@@ -250,11 +252,10 @@ private styleValueAtom = this.RULE(
 );
 
 public component = this.RULE("component", () => {
-  this.CONSUME(ComponentKeyword);
-  this.CONSUME(StringLiteral);
-
-  this.CONSUME(Identifier, {
-    LABEL: "wireframe",
+  this.OPTION3(() => {
+    this.CONSUME(ComponentKeyword);
+    this.CONSUME(StringLiteral);
+    this.CONSUME(Identifier, { LABEL: "wireframe" });
   });
 
   this.OPTION(() => {
@@ -273,8 +274,10 @@ public component = this.RULE("component", () => {
 });
 
 public style = this.RULE("style", () => {
-  this.CONSUME(StyleKeyword);
-  this.CONSUME(StringLiteral);
+  this.OPTION(() => {
+    this.CONSUME(StyleKeyword);
+    this.CONSUME(StringLiteral);
+  });
 
   this.MANY(() => {
     this.SUBRULE(this.styleDeclaration);
@@ -454,16 +457,21 @@ private sizeValue = this.RULE("sizeValue", () => {
   ]);
 });
 private placement = this.RULE("placement", () => {
+  const area = this.LA(1);
   this.SUBRULE(this.areaReference);
   this.CONSUME(GreaterThan);
-
   this.OR([
-    {
-      ALT: () => this.SUBRULE(this.componentCall),
-    },
-    {
-      ALT: () => this.SUBRULE(this.stack),
-    },
+    { ALT: () => this.SUBRULE(this.stack) },
+    { ALT: () => {
+      const first = this.LA(1);
+      this.AT_LEAST_ONE({
+        GATE: () => this.LA(1).tokenType === Identifier && this.LA(2).tokenType === LeftParenthesis &&
+          (this.LA(1).startOffset === first.startOffset ||
+            ((this.LA(1).startLine ?? 0) > (this.LA(0).endLine ?? 0) && this.LA(1).startColumn === first.startColumn)) &&
+          (this.LA(1).startLine === area.startLine || (this.LA(1).startColumn ?? 0) > (area.startColumn ?? 0)),
+        DEF: () => this.SUBRULE(this.componentCall),
+      });
+    } },
   ]);
 });
 
@@ -509,14 +517,13 @@ private stack = this.RULE("stack", () => {
 
       this.CONSUME(LeftParenthesis);
 
-      this.OPTION(() => {
-        this.AT_LEAST_ONE_SEP({
-          SEP: Comma,
-
-          DEF: () => {
-            this.SUBRULE(this.componentArgument);
-          },
-        });
+      this.MANY(() => {
+        this.SUBRULE(this.componentArgument);
+        this.OR([
+          { ALT: () => this.CONSUME(Comma) },
+          { GATE: () => this.LA(1).tokenType === RightParenthesis ||
+              (this.LA(1).startLine ?? 0) > (this.LA(0).endLine ?? 0), ALT: () => {} },
+        ]);
       });
 
       this.CONSUME(RightParenthesis);
@@ -669,6 +676,8 @@ private objectProperty = this.RULE("objectProperty", () => {
 
 private primary = this.RULE("primary", () => {
   this.OR([
+    { ALT: () => this.SUBRULE(this.stateReference) },
+    { ALT: () => this.CONSUME(ActionsKeyword) },
     { ALT: () => this.SUBRULE(this.arrayExpression) },
     { ALT: () => this.SUBRULE(this.objectExpression) },
     {
@@ -741,6 +750,66 @@ private primary = this.RULE("primary", () => {
       this.CONSUME(RightParenthesis);
     },
   );
+
+  private stateReference = this.RULE("stateReference", () => {
+    this.CONSUME(StatesKeyword);
+    this.CONSUME(Dot);
+    this.CONSUME(Identifier, { LABEL: "name" });
+  });
+
+  public actions = this.RULE("actions", () => {
+    this.OPTION(() => {
+      const header = this.CONSUME(StatesKeyword);
+      this.CONSUME(Colon);
+      const first = this.LA(1);
+      this.MANY({
+        GATE: () => this.LA(1).tokenType === Identifier &&
+          (this.LA(1).startLine ?? 0) > (header.startLine ?? 0) &&
+          (this.LA(1).startColumn ?? 0) > (header.startColumn ?? 0) &&
+          this.LA(1).startColumn === first.startColumn,
+        DEF: () => this.SUBRULE(this.actionState),
+      });
+    });
+    this.MANY2(() => this.SUBRULE(this.actionDeclaration));
+    this.CONSUME(EOF);
+  });
+
+  private actionState = this.RULE("actionState", () => {
+    this.CONSUME(Identifier, { LABEL: "name" });
+    this.CONSUME(Colon);
+    this.SUBRULE(this.expression);
+  });
+
+  private actionDeclaration = this.RULE("actionDeclaration", () => {
+    const header = this.CONSUME(ActionKeyword);
+    this.CONSUME(Identifier, { LABEL: "name" });
+    this.CONSUME(Colon);
+    const first = this.LA(1);
+    this.AT_LEAST_ONE({
+      GATE: () => [StatesKeyword, ActionsKeyword].includes(this.LA(1).tokenType) &&
+        (this.LA(1).startLine ?? 0) > (header.startLine ?? 0) &&
+        (this.LA(1).startColumn ?? 0) > (header.startColumn ?? 0) &&
+        this.LA(1).startColumn === first.startColumn,
+      DEF: () => this.SUBRULE(this.actionStep),
+    });
+  });
+
+  private actionStep = this.RULE("actionStep", () => {
+    this.OR([
+      { ALT: () => {
+        this.CONSUME(StatesKeyword);
+        this.CONSUME(Dot);
+        this.CONSUME(Identifier, { LABEL: "state" });
+        this.CONSUME(Colon);
+        this.SUBRULE(this.expression);
+      } },
+      { ALT: () => {
+        this.CONSUME(ActionsKeyword);
+        this.CONSUME2(Dot);
+        this.CONSUME2(Identifier, { LABEL: "action" });
+      } },
+    ]);
+  });
 
   public constructor() {
     super(allTokens);

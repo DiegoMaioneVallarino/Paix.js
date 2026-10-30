@@ -13,6 +13,7 @@ export interface PaixWireframeParseResult {
 
 export function parsePaixWireframe(
   source: string,
+  filePath?: string,
 ): PaixWireframeParseResult {
   const lexResult = paixLexer.tokenize(source);
 
@@ -56,10 +57,10 @@ export function parsePaixWireframe(
     };
   }
 
+  const ast = paixAstVisitor.visit(cst) as PaixWireframeNode;
+  if (!ast.name && filePath) ast.name = filePath.replace(/\\/g, "/").split("/").at(-1)!.replace(/\.paix$/, "");
   return {
-    ast: paixAstVisitor.visit(
-      cst,
-    ) as PaixWireframeNode,
+    ast,
 
     diagnostics: [],
   };

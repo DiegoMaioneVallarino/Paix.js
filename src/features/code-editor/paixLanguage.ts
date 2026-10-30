@@ -55,7 +55,7 @@ export function registerPaixLanguage(monaco: Monaco) {
   "components",
   "wireframe",
   "wireframes",
-  "state",
+  "state", "states", "inputs", "actions", "spaces",
   "action",
   "setter",
   "when",
@@ -93,7 +93,7 @@ export function registerPaixLanguage(monaco: Monaco) {
 
     // Debe aparecer antes de reconocer "this" como keyword.
     [
-      /\bthis\.[a-zA-Z][a-zA-Z0-9_]*/,
+      /\b(?:this|inputs)\.[a-zA-Z][a-zA-Z0-9_]*/,
       "variable.predefined",
     ],
 
@@ -103,6 +103,9 @@ export function registerPaixLanguage(monaco: Monaco) {
     ],
     [/\bon[A-Z][a-zA-Z0-9_]*/, "event"],
 
+    [/\bstates\.[A-Z][A-Z0-9_]*\b/, "collection"],
+    [/\bstates\.[a-zA-Z][\w]*/, "state"],
+    [/\bactions\.[a-zA-Z][\w]*/, "setter"],
     [/\bset_[a-zA-Z_][a-zA-Z0-9_]*/, "setter"],
     [/\b_[A-Z][A-Z0-9_]*\b/, "collection"],
     [/\b_[a-zA-Z][a-zA-Z0-9_]*/, "state"],

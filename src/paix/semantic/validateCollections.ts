@@ -13,7 +13,7 @@ function isStatic(expression: PaixExpressionNode): boolean {
     default: return false;
   }
 }
-export function validateCollectionDeclarations(ast: PaixComponentDefinitionNode, source: string): PaixDiagnostic[] {
+export function validateCollectionDeclarations(ast: Pick<PaixComponentDefinitionNode, "states">, source: string): PaixDiagnostic[] {
   const diagnostics: PaixDiagnostic[] = [];
   for (const state of ast.states) {
     if (!isCollectionState(state.name) || !isStatic(state.initialValue)) continue;

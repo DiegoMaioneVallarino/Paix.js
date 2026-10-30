@@ -28,7 +28,7 @@ export function CodeEditor({ path, value, diagnostics, onChange }: CodeEditorPro
   const [picker, setPicker] = useState<{ color: string; x: number; y: number } | null>(null);
   const [fontPicker, setFontPicker] = useState<{ font: string; x: number; y: number } | null>(null);
   pathRef.current = path;
-  const isStyle = () => pathRef.current.replace(/\\/g, '/').startsWith('styles/');
+  const isStyle = () => (/(?:^styles\/|\.style\.paix$)/).test(pathRef.current.replace(/\\/g, '/'));
 
   const closePicker = useCallback(() => {
     const session = colorRef.current;

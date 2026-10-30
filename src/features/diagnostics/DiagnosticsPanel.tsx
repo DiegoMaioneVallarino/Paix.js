@@ -3,6 +3,7 @@ import type { PaixFileType } from "../../project/project.types";
 import { AstViewer } from "./AstViewer";
 
 import type {
+  PaixActionsNode,
   PaixComponentDefinitionNode,
   PaixPageNode,
   PaixStyleNode,
@@ -22,6 +23,7 @@ interface DiagnosticsPanelProps {
 
   parseResult: {
     ast:
+  | PaixActionsNode
   | PaixPageNode
   | PaixComponentDefinitionNode
   | PaixWireframeNode
@@ -42,7 +44,7 @@ const parserAvailable =
   fileType === "page" ||
   fileType === "component" ||
   fileType === "wireframe" ||
-  fileType === "style";
+  fileType === "style" || fileType === "action";
 
 const problemCount = parseResult.diagnostics.length;
 

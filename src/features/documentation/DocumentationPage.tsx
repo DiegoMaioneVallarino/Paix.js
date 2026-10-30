@@ -6,228 +6,253 @@ interface Section { id: string; label: string; title: string; description: strin
 
 const sections: Section[] = [
   {
-    id: "introduction", label: "Introducción", title: "Una interfaz, tres responsabilidades.",
-    description: "Paix describe dónde vive cada componente, qué hace y cómo se ve.",
-    paragraphs: [
-      "El wireframe divide el espacio en áreas rectangulares. Los componentes ocupan esas áreas y conectan contenido, atributos y eventos. Los estilos definen su apariencia y sus variantes.",
-      "Cada archivo comienza con su tipo y un nombre. Una página o un componente también indica qué wireframe utiliza. El proyecto reúne archivos en pages, components, wireframes y styles.",
-      "Los ejemplos usan atributos recibidos mediante this.nombre. No necesitas volver a declarar esos atributos en un bloque parameters. El bloque parameters: ya no forma parte del lenguaje. Usa this.nombre directamente y otherwise donde necesites un valor alternativo.",
+    "id": "introduction",
+    "label": "Introducción",
+    "title": "Una carpeta, un componente.",
+    "description": "La estructura muestra contenido; actions concentra el comportamiento.",
+    "paragraphs": [
+      "Cada componente tiene un nombre único en el proyecto. Crear Counter desde el editor genera Counter.paix, Counter.frame.paix, Counter.style.paix y Counter.actions.paix dentro de components/Counter/.",
+      "El compilador asocia los derivados por su ruta y nombre. El componente no declara frame, style ni actions. Su frame es obligatorio; style y actions son opcionales. Los archivos derivados tampoco necesitan cabecera.",
+      "Los proyectos antiguos siguen siendo compatibles: this, otherwise, state:, .slots, listas entre corchetes y asociaciones explícitas siguen funcionando en archivos antiguos. Los ejemplos nuevos usan la sintaxis por carpeta. No se modifican automáticamente los proyectos guardados en el navegador."
     ],
-    rows: [["Wireframe", "Geometría: áreas, divisiones y distribución."], ["Component", "Contenido, composición, estado y eventos."], ["Style", "Color, tipografía y efectos visuales."], ["Page", "Punto de entrada: coloca componentes en un wireframe."]],
-  },
-  {
-    id: "pages", label: "Pages", title: "Coloca componentes en una página.",
-    description: "El operador > conecta un área con el componente que la ocupa.",
-    paragraphs: [
-      "Después del nombre de la página, escribe el nombre de su wireframe. Usa nombres de áreas declarados por ese wireframe para colocar contenido.",
-      "Un stack es una lista de componentes entre corchetes. Usa area.slots para distribuir sus elementos en los espacios generados por un slice sin nombres de áreas. Para una cuadrícula 3x3, la lista puede contener nueve componentes.",
+    "examples": [
+      {
+        "title": "Archivos asociados",
+        "file": "components/Counter/",
+        "code": "Counter.paix\nCounter.frame.paix\nCounter.style.paix\nCounter.actions.paix"
+      }
     ],
-    examples: [{ title: "Una página con tres cards", file: "pages/home.paix", code: `page "home" MainFrame
-
-headerArea >
-    Text(value: "Mi colección")
-
-contentArea.slots > [
-    Card(title: "Aurora", category: "women"),
-    Card(title: "Atlas", category: "men"),
-    Card(title: "Nova", category: "women")
-]` }],
-  },
-  {
-    id: "wireframes", label: "Wireframes", title: "Divide el espacio, conserva el encuadre.",
-    description: "Las dimensiones y la distribución pertenecen al wireframe.",
-    paragraphs: [
-      "main es el área raíz. Un slice crea áreas hijas; puedes volver a dividir una de ellas usando su nombre como destino. Los números de tamaño sin unidad se interpretan como píxeles. También puedes usar px o %.",
-      "vertical crea columnas: una sección izquierda del tamaño indicado y el espacio restante a la derecha. horizontal crea filas: una sección superior del tamaño indicado y el espacio restante abajo.",
-      "En los modos centered, el tamaño corresponde a la sección central; las dos secciones exteriores comparten el resto. island aplica una separación en los cuatro lados dentro del área, sin modificar el espacio de sus vecinos.",
-      "Una lista de tres cards necesita tres slots. Si cambias el ejemplo a grid 3x3, añade nueve cards para llenar la cuadrícula.",
-    ],
-    rows: [["vertical / horizontal", "Dos áreas con una división de tamaño definido."], ["vertical centered / horizontal centered", "Tres áreas; la central tiene un tamaño definido."], ["columns / rows", "Un número de columnas o filas iguales."], ["grid", "Cuadrícula: columnas x filas, por ejemplo 3x3."], ["island", "Una zona interior con separación en sus cuatro lados."], ["layer", "Varias áreas superpuestas."]],
-    examples: [
-      { title: "Wireframe de la página", file: "wireframes/MainFrame.paix", code: `wireframe "MainFrame"
-
-main slice horizontal 72 >
-    "headerArea"
-    "contentArea"
-
-contentArea slice columns 3` },
-      { title: "Wireframe de una card", file: "wireframes/CardWire.paix", code: `wireframe "CardWire"
-
-main slice horizontal 48 >
-    "titleArea"
-    "categoryArea"` },
-      { title: "Zona interior", file: "wireframes/IslandFrame.paix", code: `wireframe "IslandFrame"
-
-main slice island 12 >
-    "sliceArea"` },
-    ],
-  },
-  {
-    id: "components", label: "Components y atributos", title: "Recibe atributos donde los necesitas.",
-    description: "Card(title: \"Aurora\") ya identifica el atributo por su nombre.",
-    paragraphs: [
-      "Dentro del componente, this.title lee el atributo recibido. No hace falta copiarlo a un estado ni declarar su nombre otra vez. Un estado solo es necesario cuando el componente debe mantener un valor interno que puede cambiar.",
-      "otherwise proporciona un valor alternativo cuando la expresión de la izquierda devuelve undefined. En el runtime actual, false, 0, una cadena vacía y none no activan ese valor alternativo.",
-      "Los atributos no se reenvían automáticamente a componentes hijos. Si una envoltura recibe title y category y contiene una Card, pásalos explícitamente: Card(title: this.title, category: this.category).",
-    ],
-    examples: [{ title: "Componente Card", file: "components/Card.paix", code: `component "Card" CardWire
-
-style: CardSurface
-
-titleArea >
-    Text(value: this.title otherwise "Sin título")
-
-categoryArea >
-    Text(value: this.category otherwise "General")` }],
-  },
-  {
-    id: "collections", label: "Colecciones y objetos", title: "Selecciona datos, conecta atributos.",
-    description: "Los estados _MAYÚSCULAS identifican colecciones de objetos con un id único.",
-    paragraphs: [
-      "Declara una colección como _PRODUCTS: [{ id: 333, label: \"Comprar\" }]. Paix valida que sea una lista de objetos con id numérico o de texto, sin duplicados. set_PRODUCTS actualiza la colección y aplica la misma validación; si falla, conserva el valor anterior.",
-      "Las posiciones comienzan en 1. _PRODUCTS{2} selecciona el segundo objeto; _PRODUCTS{id: 333} selecciona directamente un objeto por id. Un filtro por otros campos, como _PRODUCTS{category: \"women\"}, devuelve una colección. Puedes encadenar {1} para tomar el primer resultado.",
-      "Los filtros con varios campos requieren todas las coincidencias, comparan por valor y tipo y conservan el orden original. Un selector por posición o id inexistente devuelve un valor ausente, que admite otherwise. Un filtro sin resultados devuelve [].",
-      "Button(_PRODUCTS{2}) pasa únicamente los campos que Button acepta. Los campos sobrantes se ignoran. Los argumentos con nombre, como label: \"Ver\", tienen prioridad sobre todos los objetos suministrados, independientemente de su posición. false, 0 y una cadena vacía son valores definidos.",
-      "Los primitivos declaran sus atributos en el registro. Para componentes propios, Paix los obtiene de sus referencias this.nombre en el cuerpo, los estados y las condiciones de su estilo. No hay un bloque parameters. Para recibir un objeto completo como un atributo específico, usa Profile(user: _USERS{id: 333}) y lee this.user.name.",
-      "Los stacks siguen siendo listas explícitas: no se generan componentes automáticamente desde un filtro. Selecciona un objeto antes de pasarlo como argumento sin nombre. El ejemplo CollectionDemo está en src/examples/collectionProject.ts y puede inspeccionarse como componente en el Workbench.",
-    ],
-    rows: [["_PRODUCTS{1}", "Primer objeto."], ["_PRODUCTS{id: 333}.price", "Campo price del objeto con ese id."], ["_PRODUCTS{category: \"women\"}", "Colección filtrada."], ["_PRODUCTS{category: \"women\"}{1}.name", "Nombre del primer resultado."], ["this.user.location.city", "Acceso a campos de un objeto recibido."]],
-    examples: [{ title: "Objetos en un stack explícito", code: `component "Products" ProductsFrame
-
-state:
-    _PRODUCTS: [
-        { id: 333, label: "Aurora", disabled: false, price: 120 },
-        { id: 334, label: "Atlas", disabled: true, price: 180 }
+    "rows": [
+      [
+        "Component",
+        "Contenido, atributos y conexiones de eventos."
+      ],
+      [
+        "Frame",
+        "Áreas y distribución."
+      ],
+      [
+        "Style",
+        "Apariencia y variantes."
+      ],
+      [
+        "Actions",
+        "Estados por instancia, cambios y composición de acciones."
+      ]
     ]
-
-main.slots > [
-    Button(_PRODUCTS{1}),
-    Button(_PRODUCTS{id: 334}, label: "Ver Atlas")
-]` }, { title: "Wireframe del ejemplo", code: `wireframe "ProductsFrame"
-
-main slice columns 2` }],
   },
   {
-    id: "styles", label: "Styles", title: "Diseño visual sin mover la geometría.",
-    description: "Aplica un estilo a un componente o directamente a un primitivo.",
-    paragraphs: [
-      "Un componente puede declarar style: CardSurface. Para un primitivo usa, por ejemplo, Text(value: this.title, style: CardSurface). El nombre del estilo se refiere a un archivo style del proyecto.",
-      "Los estilos no aceptan padding, contentPadding, margin, width, height, display, position, grid, flex, zIndex ni border. La geometría la controla el wireframe.",
-      "color controla el texto y también puede contener un degradado. backgroundColor recibe un color sólido; backgroundImage recibe un degradado o una imagen CSS. Usa nombres de propiedades con su capitalización exacta: textSize, no textsize.",
-      "Cada capa tiene tres propiedades: Weight es el desenfoque, Spread es el grosor del anillo o la expansión de la sombra, y Color es su pintura. Usa Weight: 0 para líneas nítidas. outlineColor e inlineColor aceptan degradados; shadowColor usa un color sólido.",
-      "Las propiedades antiguas shadow, shadowBlur, outline e inline se sustituyen por las propiedades separadas. Para ocultar un anillo usa Spread: 0; para ocultar la sombra usa shadowColor: transparent.",
+    "id": "pages",
+    "label": "Pages y espacios",
+    "title": "Coloca contenido con >.",
+    "description": "La página conserva su cabecera y el nombre de su frame.",
+    "paragraphs": [
+      "area > coloca contenido en el área. area.spaces > distribuye los componentes entre los espacios que crea el frame, en orden. Se conserva la distinción entre área y espacios.",
+      "Un stack es una lista explícita de componentes indentados. Ya no necesita [] ni comas entre hermanos. Cada nuevo componente comienza en otra línea y con la misma indentación. Los atributos pueden separarse por líneas dentro de los paréntesis; en una misma línea se separan con comas.",
+      "Una cuadrícula 3x3 admite nueve espacios. Esta versión no crea filas adicionales ni genera componentes automáticamente a partir de colecciones. Los elementos que exceden los espacios no se muestran."
     ],
-    rows: [["Superficie", "color, backgroundColor, backgroundImage, opacity, radius"], ["Capas", "shadowWeight / shadowSpread / shadowColor; outlineWeight / outlineSpread / outlineColor; inlineWeight / inlineSpread / inlineColor"], ["Texto", "font, textSize, textWeight, textStyle, textShadow, textAlign, lineHeight, letterSpacing"], ["Efectos", "backdropBlur, blur, scale, transitionTime"]],
-    examples: [
-      { title: "Estilo de las cards", file: "styles/CardSurface.paix", code: `style "CardSurface"
-
-backgroundColor: navy
-color: white
-font: "Segoe UI", sans-serif
-textSize: 18
-radius: 12
-
-outlineWeight: 0
-outlineSpread: 2
-outlineColor: gradient right from cyan to blue
-
-inlineWeight: 0
-inlineSpread: 1
-inlineColor: white
-
-shadowWeight: 18
-shadowSpread: 2
-shadowColor: black
-
-when this.category is "women":
-    backgroundColor: purple
-
-when this.category is "men":
-    backgroundColor: teal` },
-      { title: "Degradado hacia la derecha", code: `backgroundImage: gradient right from blue to white` },
-      { title: "Degradado hacia abajo", code: `backgroundImage: gradient down from blue to white` },
-      { title: "Degradado radial", code: `backgroundImage: radial gradient from white to blue` },
-      { title: "Degradado de texto", code: `color: gradient right from cyan to purple` },
-    ],
+    "examples": [
+      {
+        "title": "Página",
+        "file": "pages/home.paix",
+        "code": "page \"home\" MainFrame\nmain.spaces >\n    Counter(label: \"Primero\")\n    Counter(label: \"Segundo\")"
+      },
+      {
+        "title": "Frame de la página",
+        "file": "wireframes/MainFrame.paix",
+        "code": "wireframe \"MainFrame\"\nmain slice columns 2"
+      }
+    ]
   },
   {
-    id: "states", label: "Estados y eventos", title: "Cambia el estado, actualiza la apariencia.",
-    description: "Los estados llevan _ y sus setters se generan con set_.",
-    paragraphs: [
-      "state: declara valores internos. Un estado llamado _selected dispone del setter set_selected. Un evento como onClick recibe la llamada al setter, que se ejecuta al producirse la interacción.",
-      "Puedes inicializar un estado con un atributo: _selected: this.selected otherwise false. Esa expresión da su valor inicial; no establece una sincronización continua con el atributo recibido.",
-      "Un estilo puede leer el estado local usando when _selected:. El runtime evalúa esa condición y activa su clase visual. Cada instancia del componente conserva su propio estado.",
-      "Las acciones personalizadas requieren su implementación y conexión al runtime. Escribir el nombre de una función no crea automáticamente esa acción.",
+    "id": "components",
+    "label": "Componentes e inputs",
+    "title": "Lee los atributos donde se usan.",
+    "description": "inputs.nombre recibe el valor suministrado por quien invoca el componente.",
+    "paragraphs": [
+      "Counter(label: \"Primero\") entrega label. Se consume como inputs.label, sin declarar parameters ni copiarlo a un estado. Los objetos recibidos permiten acceso encadenado: inputs.user.location.city.",
+      "El símbolo / proporciona una alternativa solo cuando falta el valor (undefined). Conserva false, 0, \"\" y none. No es división ni un separador entre ramas de contenido.",
+      "Los atributos no se reenvían solos a hijos: Card(title: inputs.title) hace esa conexión explícita."
     ],
-    examples: [
-      { title: "Seleccionar y limpiar", file: "components/Selectable.paix", code: `component "Selectable" SelectableFrame
-
-style: SelectableSurface
-
-state:
-    _selected: this.selected otherwise false
-
-labelArea >
-    Text(value: this.label otherwise "Elemento")
-
-actionsArea.slots > [
-    Button(label: "Seleccionar", onClick: set_selected(true)),
-    Button(label: "Limpiar", onClick: set_selected(false))
-]` },
-      { title: "Wireframe del ejemplo", file: "wireframes/SelectableFrame.paix", code: `wireframe "SelectableFrame"
-
-main slice horizontal 48 >
-    "labelArea"
-    "actionsArea"
-
-actionsArea slice columns 2` },
-      { title: "Variante según el estado", file: "styles/SelectableSurface.paix", code: `style "SelectableSurface"
-
-backgroundColor: navy
-color: white
-
-when _selected:
-    backgroundColor: teal
-    outlineSpread: 2
-    outlineColor: cyan` },
-    ],
+    "examples": [
+      {
+        "title": "Counter completo",
+        "file": "components/Counter/Counter.paix",
+        "code": "labelArea >\n    Text(value: inputs.label / \"Count\")\nvalueArea >\n    Text(value: states.count)\nactionsArea.spaces >\n    Button(\n        label: \"Add\"\n        onClick: actions.add\n    )\n    Button(\n        label: \"Reset\"\n        onClick: actions.reset\n    )"
+      }
+    ]
   },
   {
-    id: "interactions", label: "Hover, focus y active", title: "Responde a la interacción.",
-    description: "Declara variantes visuales dentro del mismo estilo.",
-    paragraphs: [
-      "when hover: se activa al pasar el cursor. when active: se activa mientras se presiona el elemento. when focus: usa focus-within, por lo que también se activa cuando recibe foco un control dentro del componente.",
-      "transitionTime acepta una duración en milisegundos sin unidad, o los presets fast, smooth, slow y none. Añádelo al bloque base para animar las transiciones visuales.",
-      "hover, focus y active son nombres reservados de interacción en estas condiciones. Para un estado interno usa su nombre con _, por ejemplo _active.",
+    "id": "states",
+    "label": "Estados y actions",
+    "title": "El comportamiento vive en actions.",
+    "description": "Cada instancia mantiene sus propios estados aunque comparte el archivo de definición.",
+    "paragraphs": [
+      "El bloque states: vive en Counter.actions.paix. Declara nombres sin el prefijo _: count, selected o PRODUCTS. Se leen como states.count, states.selected o states.PRODUCTS. El formato interno del AST conserva el prefijo _ por compatibilidad.",
+      "Una acción se declara con action nombre:. Cada línea states.nombre: expresión asigna un valor. Una línea actions.otra ejecuta otra acción del mismo archivo. Los pasos se ejecutan en orden y leen los cambios de pasos anteriores.",
+      "onClick: actions.add conecta el evento sin invocar una función durante el render. La acción se ejecuta al hacer clic. Las acciones no reciben argumentos en esta primera sintaxis; sus expresiones pueden leer inputs y states.",
+      "Los nombres duplicados, las escrituras a estados inexistentes, las acciones inexistentes y los ciclos entre acciones producen diagnósticos. Una colección inválida aborta los cambios de la acción.",
+      "inputs.start / 0 se evalúa al inicializar la instancia. No sincroniza continuamente el estado con ese atributo. No hay peticiones HTTP, navegación ni acciones asíncronas nuevas en esta actualización."
     ],
-    examples: [{ title: "Botón interactivo", file: "styles/ActionSurface.paix", code: `style "ActionSurface"
-
-backgroundColor: navy
-color: white
-radius: 10
-outlineSpread: 1
-outlineColor: cyan
-transitionTime: smooth
-
-when hover:
-    backgroundColor: teal
-
-when focus:
-    outlineSpread: 3
-
-when active:
-    scale: 0.98` }],
+    "examples": [
+      {
+        "title": "Estados y acciones del contador",
+        "file": "components/Counter/Counter.actions.paix",
+        "code": "states:\n    count: inputs.start / 0\n\naction add:\n    states.count: states.count + 1\n\naction reset:\n    states.count: 0\n\naction addTwice:\n    actions.add\n    actions.add"
+      },
+      {
+        "title": "Frame del contador",
+        "file": "components/Counter/Counter.frame.paix",
+        "code": "main slice horizontal 44 >\n    \"labelArea\"\n    \"bodyArea\"\nbodyArea slice horizontal 68 >\n    \"valueArea\"\n    \"actionsArea\"\nactionsArea slice columns 2"
+      }
+    ]
   },
   {
-    id: "preview", label: "Editor y preview", title: "Prueba cada pieza en su contexto.",
-    description: "El archivo abierto determina qué muestra el preview.",
-    paragraphs: [
-      "Una página muestra la interfaz completa. Un componente muestra su propia instancia y su wireframe. Un wireframe muestra las áreas en modo de inspección. Un estilo muestra una superficie de prueba con el texto provisional Preview text.",
-      "Junto a Desktop/Mobile, Modo visual permite simular Hover, Focus y Active. En Normal siguen funcionando las interacciones naturales. Estados muestra los valores reales del componente raíz del preview: modificarlos cambia la instancia de prueba, sin escribir en el archivo.",
-      "Al abrir un estilo, Valores de prueba permite introducir estados y atributos usados por sus condiciones. Esos valores son muestras: no pertenecen a una instancia real de un componente.",
-      "En un archivo de estilo, arrastra un número con el clic derecho para cambiarlo. Un clic derecho sin arrastrar abre el menú propio. Sobre un color HEX puedes abrir Editar color; sobre el valor de font, Cambiar fuente. El selector de fuentes utiliza fuentes instaladas o cargadas por la aplicación.",
+    "id": "collections",
+    "label": "Colecciones y objetos",
+    "title": "Selecciona objetos, conecta sus atributos.",
+    "description": "Los nombres de estado en MAYÚSCULAS identifican colecciones con ids únicos.",
+    "paragraphs": [
+      "Declara PRODUCTS en el bloque states: de actions. La colección debe ser una lista de objetos con id numérico o de texto único. Conservamos [] y comas en datos: su eliminación corresponde a las listas visuales de componentes.",
+      "states.PRODUCTS{1} selecciona el primer objeto. states.PRODUCTS{id: 333} selecciona un objeto único. states.PRODUCTS{category: \"women\"} devuelve una colección filtrada; añade {1} para seleccionar su primer objeto.",
+      "Los filtros comparan por valor y tipo, exigen todas las coincidencias y conservan el orden. Una posición o id ausente devuelve undefined; / puede ofrecer una alternativa. Un filtro sin resultados devuelve [].",
+      "Button(states.PRODUCTS{1}) transmite solo los atributos que acepta Button. Para componentes propios se infieren de inputs en el componente, sus acciones y condiciones de estilo. Los atributos nombrados explícitamente tienen prioridad.",
+      "Las listas visuales siguen siendo explícitas: esta versión no introduce repeat ni generación automática. Puedes pasar un objeto completo con Profile(user: states.USERS{id: 333}) y leer inputs.user.name."
     ],
+    "examples": [
+      {
+        "title": "Datos",
+        "file": "components/Products/Products.actions.paix",
+        "code": "states:\n    PRODUCTS: [\n        { id: 333, label: \"Aurora\", disabled: false },\n        { id: 334, label: \"Atlas\", disabled: true }\n    ]"
+      },
+      {
+        "title": "Componentes",
+        "file": "components/Products/Products.paix",
+        "code": "main.spaces >\n    Button(states.PRODUCTS{1})\n    Button(states.PRODUCTS{id: 334}, label: \"Ver Atlas\")"
+      },
+      {
+        "title": "Frame",
+        "file": "components/Products/Products.frame.paix",
+        "code": "main slice columns 2"
+      }
+    ]
   },
+  {
+    "id": "wireframes",
+    "label": "Wireframes",
+    "title": "La geometría pertenece al frame.",
+    "description": "main es el área raíz; cada slice divide su espacio.",
+    "paragraphs": [
+      "Los tamaños sin unidad son píxeles; también se admite px y %. vertical crea columnas y horizontal crea filas. centered reserva el tamaño para el centro y reparte el resto entre los dos lados.",
+      "island separa el área interior por sus cuatro lados sin añadir padding al estilo. layer superpone áreas. columns, rows y grid crean espacios que se llenan con .spaces.",
+      "Las reglas condicionales de tamaño comparan dimensiones del área: main when width less than height slice rows 2. La selección se actualiza cuando cambia el tamaño del área."
+    ],
+    "examples": [
+      {
+        "title": "Cuadrícula",
+        "file": "components/Catalogue/Catalogue.frame.paix",
+        "code": "main slice grid 3x3"
+      },
+      {
+        "title": "Island",
+        "file": "components/Panel/Panel.frame.paix",
+        "code": "main slice island 12 >\n    \"contentArea\""
+      }
+    ],
+    "rows": [
+      [
+        "vertical / horizontal",
+        "Dos áreas; tamaño de la primera."
+      ],
+      [
+        "vertical centered / horizontal centered",
+        "Tres áreas; tamaño del centro."
+      ],
+      [
+        "columns / rows",
+        "Cantidad de columnas o filas iguales."
+      ],
+      [
+        "grid",
+        "Columnas x filas, como 3x3."
+      ],
+      [
+        "island",
+        "Una zona interior."
+      ],
+      [
+        "layer",
+        "Áreas superpuestas."
+      ]
+    ]
+  },
+  {
+    "id": "styles",
+    "label": "Styles",
+    "title": "Apariencia sin modificar el encuadre.",
+    "description": "El archivo hermano .style.paix se aplica automáticamente al componente.",
+    "paragraphs": [
+      "No uses style: en el componente asociado por carpeta. Para un primitivo puedes indicar un estilo compartido: Text(value: inputs.title, style: TextSurface). Los estilos compartidos pueden seguir en styles/.",
+      "No se permite padding, contentPadding, margin, width, height, display, position, grid, flex, zIndex ni border en estilos.",
+      "color controla el texto, incluido degradado. backgroundColor admite color sólido; backgroundImage admite degradados. Usa textSize con esa capitalización exacta.",
+      "Cada capa dispone de Weight (desenfoque), Spread (grosor o expansión) y Color. outlineColor e inlineColor aceptan degradados; shadowColor usa color sólido. Spread: 0 oculta un anillo; shadowColor: transparent oculta la sombra.",
+      "when states.count is 3: consulta el estado de la instancia. when inputs.category is \"women\": consulta un atributo. Las condiciones de estilo cambian apariencia, no contenido."
+    ],
+    "examples": [
+      {
+        "title": "Estilo asociado",
+        "file": "components/Counter/Counter.style.paix",
+        "code": "backgroundColor: navy\ncolor: white\nradius: 12\ntextSize: 18\noutlineWeight: 0\noutlineSpread: 2\noutlineColor: gradient right from cyan to blue\nshadowWeight: 18\nshadowSpread: 2\nshadowColor: black\ntransitionTime: 180\nwhen states.count is 3:\n    backgroundColor: teal"
+      }
+    ],
+    "rows": [
+      [
+        "Superficie",
+        "color, backgroundColor, backgroundImage, opacity, radius"
+      ],
+      [
+        "Capas",
+        "shadowWeight / shadowSpread / shadowColor; outlineWeight / outlineSpread / outlineColor; inlineWeight / inlineSpread / inlineColor"
+      ],
+      [
+        "Texto",
+        "font, textSize, textWeight, textStyle, textShadow, textAlign, lineHeight, letterSpacing"
+      ],
+      [
+        "Efectos",
+        "backdropBlur, blur, scale, transitionTime"
+      ]
+    ]
+  },
+  {
+    "id": "interactions",
+    "label": "Hover, focus y active",
+    "title": "Variantes de interacción.",
+    "description": "Los estilos reconocen las interacciones naturales y el preview permite simularlas.",
+    "paragraphs": [
+      "when hover: se activa al pasar el cursor; when active: mientras se presiona; when focus: cuando el elemento o un descendiente recibe foco.",
+      "Los estados internos se leen con states: states.active es distinto del nombre de interacción active. transitionTime acepta milisegundos sin unidad, fast, smooth, slow o none."
+    ],
+    "examples": [
+      {
+        "title": "Interacciones",
+        "file": "components/Counter/Counter.style.paix",
+        "code": "backgroundColor: navy\ntransitionTime: smooth\nwhen hover:\n    backgroundColor: teal\nwhen focus:\n    outlineSpread: 3\nwhen active:\n    scale: 0.98"
+      }
+    ]
+  },
+  {
+    "id": "preview",
+    "label": "Editor y preview",
+    "title": "Inspecciona cada pieza.",
+    "description": "El archivo abierto determina el preview.",
+    "paragraphs": [
+      "Un componente muestra su instancia con frame, estilo y acciones asociados. Al abrir su archivo actions también puedes inspeccionar esa instancia. Un frame muestra sus áreas; un estilo muestra una superficie con Preview text.",
+      "Junto a Desktop/Mobile puedes simular Hover, Focus y Active y consultar los estados. Modificarlos cambia la instancia de prueba sin editar el código. Los valores del preview de estilo son muestras.",
+      "En estilos, arrastra un número con clic derecho. Un clic derecho sin arrastrar abre el menú. Sobre HEX usa Editar color y sobre font, Cambiar fuente. Funciona también en archivos .style.paix dentro de componentes.",
+      "Crear un componente genera sus cuatro archivos. Los ejemplos actualizados se cargan en un proyecto nuevo. Reset descarta el proyecto local y carga los ejemplos: exporta o copia tus cambios antes de usarlo."
+    ]
+  }
 ];
 
 function CodeExample({ title, file, code }: Example) {
@@ -271,7 +296,7 @@ export function DocumentationPage() {
     </header>
     <div className="paix-doc-layout">
       <aside className="paix-doc-sidebar">
-        <label className="paix-doc-search"><span>Buscar en la documentación</span><input type="search" placeholder="Ej. gradient, this, island…" value={query} onChange={event => setQuery(event.target.value)} /></label>
+        <label className="paix-doc-search"><span>Buscar en la documentación</span><input type="search" placeholder="Ej. inputs, actions, island…" value={query} onChange={event => setQuery(event.target.value)} /></label>
         <nav aria-label="Temas de documentación">
           <p>GUÍA DE PAIX</p>
           {matches.map((section, index) => <a key={section.id} href={`#${section.id}`} aria-current={active === section.id ? "location" : undefined} onClick={() => setActive(section.id)}><span>{String(index + 1).padStart(2, "0")}</span>{section.label}</a>)}

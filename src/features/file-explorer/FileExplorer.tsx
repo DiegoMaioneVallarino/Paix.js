@@ -46,6 +46,7 @@ const creatableFileTypes: Array<{
     label: "Wireframe",
     description: "Spatial layout definition",
   },
+  { type: "action", label: "Actions", description: "Component states and behavior" },
   {
     type: "style",
     label: "Style",
@@ -159,7 +160,7 @@ export function FileExplorer() {
       project.files,
     )) {
       const folder =
-        file.path.split("/")[0] ?? "other";
+        file.path.slice(0, file.path.lastIndexOf("/")) || "other";
 
       if (!groups[folder]) {
         groups[folder] = [];

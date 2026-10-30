@@ -111,6 +111,7 @@ b.ai-brand-text {
     background: linear-gradient(#636363, #ffffff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    margin-left: 52px;
 }
 
 
@@ -133,6 +134,7 @@ b.js-type-text {
     align-items: baseline;
     gap: 0px;
     margin-top: -3px;
+    width: 41px;
 }
 .project-name {
     display: flex;
@@ -1060,8 +1062,21 @@ b.js-type-text {
 .brand-logo {
     display: block;
     width: auto;
-    height: 50px;
+    height: 39px;
     object-fit: contain;
+    float: right;
+    right: 0;
+    position: absolute;
+    margin-top: -8px;
+}
+
+.brandSg {
+    background: linear-gradient(45deg, black, transparent);
+    border-radius: 7px;
+    height: 30px;
+    background: linear-gradient(#1b4d6b, #00a7f6);
+    box-shadow: 0 0 0 1px #0097ff;
+    position: relative;
 }
 
 .paix-file-type-icon {
