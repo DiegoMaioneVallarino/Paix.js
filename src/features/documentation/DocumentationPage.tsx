@@ -293,6 +293,19 @@ const sections: Section[] = [
       "La ejecución ocupa el tamaño de la ventana y utiliza los wireframes del proyecto sin etiquetas de depuración. Si hay errores de compilación, la ventana muestra los diagnósticos.",
       "Si el navegador bloquea la ventana, permite ventanas emergentes para el sitio y pulsa Run de nuevo. El navegador puede abrirla como pestaña según su configuración."
     ]
+  },
+  {
+    "id": "export",
+    "label": "Exportar",
+    "title": "Export: una web lista para publicar.",
+    "description": "Descarga un ZIP con index.html y assets/.",
+    "paragraphs": [
+      "Export compila una copia del contenido actual y descarga un ZIP. Publica su contenido en un servidor estático: la web incluye React y el runtime de Paix, sin Monaco, editor ni compilador. No requiere npm en el hosting.",
+      "La exportación incluye la página de entrada y sus definiciones. Los estados se reinician al recargar. Los errores de compilación detienen la exportación.",
+      "Las imágenes locales referenciadas mediante url(...) en estilos se copian al ZIP y sus rutas se ajustan. Si falta un recurso, la exportación se detiene. Las URLs externas se conservan y se enumeran en README.txt; requieren conexión.",
+      "Las fuentes se exportan como nombres de familia. Para fuentes personalizadas debes añadir sus archivos y una declaración @font-face al sitio exportado; el editor no dispone todavía de un registro de fuentes del proyecto.",
+      "El runtime se prepara automáticamente al ejecutar npm run dev o npm run build. También puedes regenerarlo con npm run build:runtime. Conserva public/paix-export-runtime al desplegar el editor para que Export funcione."
+    ]
   }
 ];
 

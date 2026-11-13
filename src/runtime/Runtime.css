@@ -1,0 +1,389 @@
+
+
+
+
+
+.paix-area {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+
+.paix-area-header {
+  justify-content: flex-start;
+  padding: 0 22px;
+  background: rgba(255, 255, 255, 0.38);
+  border-bottom: 1px solid rgba(18, 68, 98, 0.09);
+  backdrop-filter: blur(20px);
+}
+
+
+.paix-area-content {
+  background:
+    radial-gradient(
+      circle at 50% 45%,
+      rgba(109, 204, 255, 0.16),
+      transparent 42%
+    );
+}
+
+
+.paix-text {
+  color: #10212c;
+  font-size: 17px;
+  font-weight: 750;
+  letter-spacing: -0.025em;
+}
+
+
+.paix-button {
+  padding: 10px 17px;
+  color: #eff9ff;
+  font-weight: 650;
+  background: linear-gradient(
+    145deg,
+    #35baff,
+    #087ed6
+  );
+  border: 1px solid rgba(0, 86, 150, 0.22);
+  border-radius: 10px;
+  box-shadow:
+    0 10px 25px rgba(0, 121, 204, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+  cursor: pointer;
+}
+
+
+.paix-button:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+
+.paix-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+
+.paix-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+
+.paix-unknown-component {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 18px;
+  color: #764848;
+  background: rgba(255, 226, 226, 0.75);
+  border: 1px dashed rgba(177, 72, 72, 0.32);
+  border-radius: 10px;
+}
+
+
+.paix-unknown-component strong {
+  font-size: 13px;
+}
+
+
+.paix-unknown-component span {
+  font-size: 10px;
+  opacity: 0.72;
+}
+
+
+.paix-runtime-empty {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  padding: 30px;
+  color: #71808a;
+  font-size: 12px;
+  text-align: center;
+}
+
+
+.paix-user-component {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.paix-component-area {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.paix-runtime-error {
+  padding: 10px 14px;
+  color: #ffb4b4;
+  font-size: 11px;
+  background: rgba(120, 20, 20, 0.15);
+  border: 1px solid rgba(255, 90, 90, 0.25);
+  border-radius: 8px;
+}
+
+
+.paix-stack {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 8px;
+}
+
+
+.paix-slots-stack {
+  display: grid;
+  grid-template-columns: repeat(
+    var(--paix-slot-count),
+    minmax(0, 1fr)
+  );
+  gap: 8px;
+}
+
+
+.paix-stack-item {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.paix-stack-item > * {
+  width: 100%;
+  height: 100%;
+}
+
+
+.paix-wireframe {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+
+
+.paix-wireframe-debug {
+  color: #dff5ff;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(31, 165, 255, 0.12),
+      transparent 55%
+    ),
+    #07131c;
+}
+
+
+
+.paix-wireframe-area {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+
+
+.paix-wireframe-debug .paix-wireframe-area {
+  background: rgba(10, 45, 65, 0.16);
+  border: 1px solid rgba(88, 199, 255, 0.4);
+  box-shadow:
+    inset 0 0 24px rgba(37, 165, 230, 0.035);
+}
+
+
+.paix-wireframe-debug .paix-wireframe-area:hover {
+  background: rgba(23, 139, 198, 0.13);
+  border-color: rgba(121, 219, 255, 0.78);
+}
+
+
+.paix-wireframe-debug .paix-wireframe-slot {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(36, 154, 211, 0.08),
+      rgba(8, 29, 42, 0.16)
+    );
+  border-style: dashed;
+}
+
+
+
+.paix-wireframe-runtime {
+  color: inherit;
+  background: transparent;
+}
+
+
+.paix-wireframe-runtime .paix-wireframe-area,
+.paix-wireframe-runtime .paix-wireframe-slot {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+
+
+.paix-wireframe-content {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  align-items: stretch;
+}
+
+
+.paix-wireframe-content > * {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+
+
+.paix-wireframe-label {
+  position: absolute;
+  top: 6px;
+  left: 7px;
+  z-index: 1000;
+  padding: 3px 6px;
+  color: #bceaff;
+  font-family:
+    "Cascadia Code",
+    Consolas,
+    monospace;
+  font-size: 8px;
+  line-height: 1;
+  pointer-events: none;
+  background: rgba(3, 20, 30, 0.82);
+  border: 1px solid rgba(94, 205, 255, 0.28);
+  border-radius: 4px;
+  backdrop-filter: blur(8px);
+}
+
+
+.paix-wireframe-error {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: #ff9d9d;
+  background: rgba(120, 20, 20, 0.14);
+}
+
+
+.paix-layer-legend {
+  position: absolute;
+  top: 28px;
+  right: 7px;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 3px;
+  pointer-events: none;
+}
+
+
+.paix-layer-legend span {
+  padding: 3px 6px;
+  color: #bceaff;
+  font-family:
+    "Cascadia Code",
+    Consolas,
+    monospace;
+  font-size: 8px;
+  background: rgba(3, 20, 30, 0.86);
+  border: 1px solid rgba(94, 205, 255, 0.26);
+  border-radius: 4px;
+}
+
+
+
+.paix-page {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+
+.paix-wireframe-content {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+
+.paix-wireframe-content > * {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+
+
+.paix-wireframe-content > * {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+
+.paix-wireframe-runtime {
+  color: inherit;
+  background: transparent;
+}
+
+
+.paix-wireframe-runtime .paix-wireframe-area,
+.paix-wireframe-runtime .paix-wireframe-slot {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+
+.paix-wireframe-runtime .paix-wireframe-area:hover,
+.paix-wireframe-runtime .paix-wireframe-slot:hover {
+  background: transparent;
+  border-color: transparent;
+}

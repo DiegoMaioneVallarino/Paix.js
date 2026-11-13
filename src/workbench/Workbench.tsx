@@ -1,3 +1,4 @@
+import { exportProject } from "../features/export/exportProject";
 import { runProject } from "../features/run/runProject";
 import { parsePaixActions } from "../paix/parser/parseActions";
 import { useMemo, useState } from "react";
@@ -24,6 +25,15 @@ import { validatePaixWireframe } from "../paix/semantic/validateWireframe";
 
 
 export function Workbench() {
+  const [exporting, setExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState("");
+  const handleExport = async () => {
+    if (exporting) return;
+    setExporting(true); setExportMessage("");
+    try { await exportProject(project); setExportMessage("ZIP listo. Revisa las descargas del navegador."); }
+    catch (error) { setExportMessage(error instanceof Error ? error.message : "No se pudo exportar el proyecto."); }
+    finally { setExporting(false); }
+  };
   const [runError, setRunError] = useState<string | null>(null);
   const project = useProjectStore(
     (state) => state.project,
@@ -214,8 +224,10 @@ const inspectedComponent:
   <button
     type="button"
     className="toolbar-button"
+    disabled={exporting}
+    onClick={() => void handleExport()}
   >
-    Export
+    {exporting ? "Exportando…" : "Export"}
   </button>
 
   <button
@@ -228,6 +240,7 @@ const inspectedComponent:
 </div>
       </header>
       {runError && <div role="alert">{runError}</div>}
+      {exportMessage && <div role="status">{exportMessage}</div>}
 
       <div className="workbench-content">
         <FileExplorer />

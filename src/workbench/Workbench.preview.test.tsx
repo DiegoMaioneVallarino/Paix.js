@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { exportProject } from "../features/export/exportProject";
 import { counterProject } from "../examples/counterProject";
 
 import {
@@ -246,4 +247,15 @@ test("Run launches the complete current project while a style is open", () => {
     fireEvent.click(view.getByRole("button", { name: "Run" }));
     expect(view.getByRole("alert").textContent).toContain("bloqueó");
   } finally { open.mockRestore(); }
+});
+
+vi.mock("../features/export/exportProject", () => ({ exportProject: vi.fn().mockResolvedValue(undefined) }));
+
+test("Export downloads the current complete project and reports completion", async () => {
+  currentProject = counterProject;
+  mockSelection.activeFilePath = "styles/surfaces.paix";
+  const view = render(<Workbench />);
+  fireEvent.click(view.getByRole("button", { name: "Export" }));
+  expect(exportProject).toHaveBeenCalledWith(counterProject);
+  expect(await view.findByRole("status")).toHaveProperty("textContent", "ZIP listo. Revisa las descargas del navegador.");
 });
