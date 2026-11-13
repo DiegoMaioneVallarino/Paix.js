@@ -8,6 +8,7 @@ import type {
 } from "../diagnostics/diagnostic.types";
 
 const allowedProperties = new Set<string>([
+  "styles",
   "color",
 
   "backgroundColor",
@@ -111,6 +112,10 @@ export function validatePaixStyle(
     source,
     diagnostics,
   );
+
+  for (const tag of style.tags ?? []) {
+    validateProperties(tag.properties, source, diagnostics);
+  }
 
   for (const condition of style.conditions) {
     validateProperties(

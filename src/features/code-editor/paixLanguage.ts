@@ -42,7 +42,7 @@ export function registerPaixLanguage(monaco: Monaco) {
 
     indentationRules: {
       increaseIndentPattern:
-        /^\s*(component|page|wireframe|action|setter|state|when|otherwise|repeat|shared)\b.*$/,
+        /^\s*(component|page|wireframe|action|setter|state|when|otherwise|repeat|shared|tag)\b.*$/,
       decreaseIndentPattern: /^\s*(otherwise|})\b/,
     },
   });
@@ -65,7 +65,7 @@ export function registerPaixLanguage(monaco: Monaco) {
   "this",
   "use",
   "style",
-  "styles",
+  "styles", "tag",
   "repeat",
   "as",
   "from",

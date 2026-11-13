@@ -532,9 +532,23 @@ private stack = this.RULE("stack", () => {
 
   private componentArgument = this.RULE("componentArgument", () => {
     this.OR([
+      { GATE: () => this.LA(1).image === "styles" && this.LA(2).tokenType === Colon, ALT: () => this.SUBRULE(this.stylesArgument) },
       { GATE: () => this.LA(2).tokenType === Colon, ALT: () => this.SUBRULE(this.argument) },
       { ALT: () => this.SUBRULE(this.expression) },
     ]);
+  });
+
+  private stylesArgument = this.RULE("stylesArgument", () => {
+    this.CONSUME(Identifier);
+    this.CONSUME(Colon);
+    this.CONSUME2(Identifier, { LABEL: "tagName" });
+    this.MANY({
+      GATE: () => this.LA(1).tokenType === Comma && this.LA(2).tokenType === Identifier && this.LA(3).tokenType !== Colon,
+      DEF: () => {
+        this.CONSUME(Comma);
+        this.CONSUME3(Identifier, { LABEL: "tagName" });
+      },
+    });
   });
 
   private argument = this.RULE(

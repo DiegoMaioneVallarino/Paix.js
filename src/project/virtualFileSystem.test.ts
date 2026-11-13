@@ -42,7 +42,7 @@ const creationCases: Array<{
     name: "NewsStyle",
     path: "styles/NewsStyle.paix",
     declaration:
-      'style "NewsStyle"',
+      'tag NewsStyle:',
   },
 ];
 

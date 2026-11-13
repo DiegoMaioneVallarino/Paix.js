@@ -1,0 +1,13 @@
+.paix-run-page {
+  width: 100%;
+  height: 100dvh;
+  min-width: 0;
+  min-height: 0;
+}
+.paix-run-message {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px;
+  overflow-wrap: anywhere;
+}
+.paix-run-message li { margin-block: 12px; }

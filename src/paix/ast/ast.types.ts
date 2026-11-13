@@ -140,7 +140,14 @@ export interface PaixStyleConditionNode {
   properties: PaixStylePropertyNode[];
 }
 
+export interface PaixStyleTagNode {
+  name: string;
+  properties: PaixStylePropertyNode[];
+  line: number;
+}
+
 export interface PaixStyleNode {
+  tags?: PaixStyleTagNode[];
   type: "Style";
   name: string;
   properties: PaixStylePropertyNode[];

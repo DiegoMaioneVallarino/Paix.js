@@ -192,7 +192,7 @@ const sections: Section[] = [
     "title": "Apariencia sin modificar el encuadre.",
     "description": "El archivo hermano .style.paix se aplica automáticamente al componente.",
     "paragraphs": [
-      "No uses style: en el componente asociado por carpeta. Para un primitivo puedes indicar un estilo compartido: Text(value: inputs.title, style: TextSurface). Los estilos compartidos pueden seguir en styles/.",
+      "El archivo hermano .style.paix sigue asociado automáticamente. Los tags reutilizables viven exclusivamente en styles/*.paix; se aplican con styles: Nombre, Otro tanto en invocaciones como en hojas de estilo.",
       "No se permite padding, contentPadding, margin, width, height, display, position, grid, flex, zIndex ni border en estilos.",
       "color controla el texto, incluido degradado. backgroundColor admite color sólido; backgroundImage admite degradados. Usa textSize con esa capitalización exacta.",
       "Cada capa dispone de Weight (desenfoque), Spread (grosor o expansión) y Color. outlineColor e inlineColor aceptan degradados; shadowColor usa color sólido. Spread: 0 oculta un anillo; shadowColor: transparent oculta la sombra.",
@@ -225,6 +225,35 @@ const sections: Section[] = [
     ]
   },
   {
+    "id": "style-tags",
+    "label": "Tags compartidos",
+    "title": "Estilos que se acumulan.",
+    "description": "Un tag agrupa propiedades visuales y puede combinar otros tags.",
+    "paragraphs": [
+      "Declara tag Nombre: en cualquier hoja dentro de styles/. Los nombres son únicos en el proyecto y no necesitan imports. Un componente no exporta sus estilos privados.",
+      "En cada bloque, styles: aplica los tags de izquierda a derecha; después se aplican las propiedades escritas directamente en ese bloque. Al invocar un componente, sus tags se añaden sobre el estilo asociado y las variantes activas quedan al final. La última definición de cada propiedad gana; las demás propiedades se conservan.",
+      "Los tags compartidos no contienen condiciones ni estados de un componente. Coloca when states.nombre, when hover, when focus y when active en la hoja del componente; cada variante puede usar styles:. Las referencias circulares, desconocidas y los nombres duplicados producen diagnósticos.",
+      "Abrir una hoja compartida muestra un selector para previsualizar cada tag. Las combinaciones no dependen del orden de los archivos ni de otros componentes renderizados. No se permite padding ni propiedades de geometría.",
+      "El argumento singular style: se conserva para proyectos anteriores. Usa styles: para acumular tags sin sustituir el estilo asociado."
+    ],
+    "examples": [
+      {
+        "title": "Crear grupos y componerlos",
+        "file": "styles/surfaces.paix",
+        "code": "tag Rounded:\n    radius: 16\n\ntag Glass:\n    styles: Rounded\n    backgroundColor: #071b2b\n    backgroundImage: gradient down from #0d3a5c to #071b2b\n    color: white\n\ntag Highlight:\n    outlineSpread: 2\n    outlineColor: gradient right from cyan to blue"
+      },
+      {
+        "title": "Composición y variantes locales",
+        "file": "components/Counter/Counter.style.paix",
+        "code": "styles: Glass\ntextSize: 18\n\nwhen hover:\n    styles: Highlight\n\nwhen states.count is 3:\n    styles: Highlight\n    color: cyan"
+      },
+      {
+        "title": "Aplicar tags a instancias",
+        "code": "contentArea.spaces >\n    Counter(label: \"Contador\", styles: Highlight)\n    Button(label: \"Guardar\", styles: Glass, Highlight)"
+      }
+    ]
+  },
+  {
     "id": "interactions",
     "label": "Hover, focus y active",
     "title": "Variantes de interacción.",
@@ -251,6 +280,18 @@ const sections: Section[] = [
       "Junto a Desktop/Mobile puedes simular Hover, Focus y Active y consultar los estados. Modificarlos cambia la instancia de prueba sin editar el código. Los valores del preview de estilo son muestras.",
       "En estilos, arrastra un número con clic derecho. Un clic derecho sin arrastrar abre el menú. Sobre HEX usa Editar color y sobre font, Cambiar fuente. Funciona también en archivos .style.paix dentro de componentes.",
       "Crear un componente genera sus cuatro archivos. Los ejemplos actualizados se cargan en un proyecto nuevo. Reset descarta el proyecto local y carga los ejemplos: exporta o copia tus cambios antes de usarlo."
+    ]
+  },
+  {
+    "id": "run",
+    "label": "Ejecutar",
+    "title": "Run: la página en su propia ventana.",
+    "description": "Prueba el proyecto fuera del editor.",
+    "paragraphs": [
+      "Run abre la página de entrada del proyecto en una ventana independiente, usando el contenido actual de todos los archivos. El archivo abierto en el editor no cambia la página que se ejecuta.",
+      "Cada ejecución conserva su propia copia del proyecto. Los cambios posteriores del editor requieren pulsar Run otra vez. Los estados y acciones se ejecutan en esa ventana; recargarla reinicia sus estados usando la misma copia.",
+      "La ejecución ocupa el tamaño de la ventana y utiliza los wireframes del proyecto sin etiquetas de depuración. Si hay errores de compilación, la ventana muestra los diagnósticos.",
+      "Si el navegador bloquea la ventana, permite ventanas emergentes para el sitio y pulsa Run de nuevo. El navegador puede abrirla como pestaña según su configuración."
     ]
   }
 ];

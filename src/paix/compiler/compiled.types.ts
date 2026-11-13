@@ -27,5 +27,6 @@ export interface PaixCompiledProject {
     PaixStyleNode
   >;
 
+  tags?: Record<string, PaixStyleNode>;
   diagnostics: PaixDiagnostic[];
 }

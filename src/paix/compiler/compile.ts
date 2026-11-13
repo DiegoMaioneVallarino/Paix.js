@@ -1,3 +1,5 @@
+import { expandStyle, expandStyleProperties, styleTagNames } from "./styleTags";
+import type { PaixStyleNode } from "../ast/ast.types";
 import { parsePaixActions } from "../parser/parseActions";
 import type { PaixProject } from "../../project/project.types";
 import { parsePaixComponent } from "../parser/parseComponent";
@@ -23,6 +25,9 @@ export function compilePaixProject(
   const components: PaixCompiledProject["components"] = {};
   const wireframes: PaixCompiledProject["wireframes"] = {};
 const styles: PaixCompiledProject["styles"] = {};
+const tags: Record<string, PaixStyleNode> = Object.create(null);
+const rawTags = new Map<string, { style: PaixStyleNode; filePath: string; line: number }>();
+const stylePaths = new Map<string, string>();
 
 const componentSourcePaths: Record<
   string,
@@ -179,6 +184,20 @@ for (
     continue;
   }
 
+  if (styleResult.ast.tags) {
+    if (!file.path.replace(/\\/g, "/").startsWith("styles/")) {
+      diagnostics.push({ source: "semantic", severity: "error", message: "Shared tags must be declared in styles/; component style sheets cannot export tags.", filePath: file.path, line: 1, column: 1, length: 1 });
+      continue;
+    }
+    for (const tag of styleResult.ast.tags) {
+      const style: PaixStyleNode = { type: "Style", name: tag.name, properties: tag.properties, conditions: [] };
+      diagnostics.push(...validatePaixStyle(style, file.content).map(d => ({ ...d, filePath: file.path })));
+      if (rawTags.has(tag.name)) diagnostics.push({ source: "semantic", severity: "error", message: `Style tag "${tag.name}" is declared more than once.`, filePath: file.path, line: tag.line, column: 1, length: tag.name.length });
+      else rawTags.set(tag.name, { style, filePath: file.path, line: tag.line });
+    }
+    continue;
+  }
+  stylePaths.set(styleResult.ast.name, file.path);
   diagnostics.push(
     ...validatePaixStyle(
       styleResult.ast,
@@ -212,6 +231,34 @@ for (
 
   styles[styleName] =
     styleResult.ast;
+}
+
+// Resolve shared tags independently of file order; reject cycles before expansion.
+const resolving = new Set<string>();
+const failed = new Set<string>();
+const resolveTag = (name: string): PaixStyleNode => {
+  if (Object.hasOwn(tags, name)) return tags[name];
+  if (resolving.has(name)) throw new Error(`Circular style tags: ${[...resolving, name].join(" -> ")}.`);
+  const entry = rawTags.get(name);
+  if (!entry) throw new Error(`Unknown style tag "${name}".`);
+  if (failed.has(name)) throw new Error(`Style tag "${name}" could not be resolved.`);
+  resolving.add(name);
+  try {
+    for (const property of entry.style.properties) if (property.name === "styles") {
+      for (const dependency of styleTagNames(property.value)) resolveTag(dependency);
+    }
+    tags[name] = { ...entry.style, properties: expandStyleProperties(entry.style.properties, tags) };
+    return tags[name];
+  } catch (error) { failed.add(name); throw error; }
+  finally { resolving.delete(name); }
+};
+for (const [name, entry] of rawTags) {
+  try { resolveTag(name); }
+  catch (error) { diagnostics.push({ source: "semantic", severity: "error", message: String(error instanceof Error ? error.message : error), filePath: entry.filePath, line: entry.line, column: 1, length: name.length }); }
+}
+for (const [name, style] of Object.entries(styles)) {
+  try { styles[name] = expandStyle(style, tags); }
+  catch (error) { diagnostics.push({ source: "semantic", severity: "error", message: String(error instanceof Error ? error.message : error), filePath: stylePaths.get(name), line: 1, column: 1, length: 1 }); }
 }
 
 // Companion files bind by exact sibling path; their display headers are optional.
@@ -293,6 +340,21 @@ for (
   });
 }
 
+  for (const [document, filePath] of [
+    ...Object.entries(components).map(([name, component]) => [component, componentSourcePaths[name]] as const),
+    ...(pageResult.ast ? [[pageResult.ast, entryFile.path] as const] : []),
+  ]) {
+    for (const placement of document.placements) {
+      const children = placement.type === "Placement" ? [placement.component] : placement.stack.items;
+      for (const child of children) for (const argument of child.arguments) {
+        if (argument.type !== "Argument" || argument.name !== "styles") continue;
+        const value = argument.value;
+        if (value && typeof value === "object" && value.type === "ArrayExpression") for (const name of value.items) {
+          if (typeof name !== "string" || !Object.hasOwn(tags, name)) diagnostics.push({ source: "semantic", severity: "error", message: `Unknown style tag "${String(name)}".`, filePath, line: 1, column: 1, length: 1 });
+        }
+      }
+    }
+  }
   if (pageResult.ast) {
     diagnostics.push(
       ...validatePaixPage(
@@ -311,6 +373,7 @@ for (
   components,
   wireframes,
   styles,
+  tags,
   diagnostics,
 };
 }

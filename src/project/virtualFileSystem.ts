@@ -144,7 +144,9 @@ action add:
 `;
 
     case "style":
-      return `style "${name}"
+      return `tag ${name}:
+    color: white
+    radius: 12
 `;
   }
 }

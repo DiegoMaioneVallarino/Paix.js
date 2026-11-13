@@ -1,3 +1,4 @@
+import { expandStyle } from "../paix/compiler/styleTags";
 import { isCollectionState } from "./collectionValues";
 import { useEffect, useState, type CSSProperties } from "react";
 import type { PaixExpressionNode, PaixStyleNode } from "../paix/ast/ast.types";
@@ -30,7 +31,17 @@ export function getStyleSampleValues(style: PaixStyleNode): Record<string, unkno
   style.conditions.forEach(condition => visit(condition.condition));
   return values;
 }
-export function PaixStylePreview({ program, style }: Props) {
+export function PaixStylePreview({ program, style: source }: Props) {
+  const [selectedTag, setSelectedTag] = useState("");
+  const tagName = source.tags?.some(tag => tag.name === selectedTag) ? selectedTag : source.tags?.[0]?.name;
+  let style = source;
+  let error = "";
+  try {
+    if (source.tags) {
+      if (!tagName || !program.tags?.[tagName]) throw new Error("Corrige los errores del tag para ver su preview.");
+      style = program.tags[tagName];
+    } else style = expandStyle(source, program.tags ?? {});
+  } catch (cause) { error = cause instanceof Error ? cause.message : String(cause); }
   const preview = usePreviewRuntime();
   const publish = preview?.publish;
   const [values, setValues] = useState(() => getStyleSampleValues(style));
@@ -46,7 +57,9 @@ export function PaixStylePreview({ program, style }: Props) {
   useEffect(() => () => publish?.(null), [publish]);
   const inputs = Object.fromEntries(Object.entries(values).filter(([name]) => name.startsWith("this.")).map(([name, value]) => [name.slice(5), value]));
   const classes = resolvePaixStyleClasses(style, { ...values, [PAIX_INPUTS_SCOPE_KEY]: inputs }, preview?.interaction);
+  if (error) return <div className="paix-runtime-error">{error}</div>;
   return <div className="paix-style-preview-stage" data-paix-style-preview={style.name} style={stage}>
+    {source.tags && <label>Tag <select aria-label="Style tag" value={tagName} onChange={event => setSelectedTag(event.target.value)}>{source.tags.map(tag => <option key={tag.name} value={tag.name}>{tag.name}</option>)}</select></label>}
     <PaixStyleSheet styles={{ ...program.styles, [style.name]: style }} />
     <div className={`paix-style-preview-surface ${classes}`} style={sample} tabIndex={0}>
       <span className="paix-text-content">Preview text</span>

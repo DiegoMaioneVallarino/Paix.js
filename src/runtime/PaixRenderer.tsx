@@ -1,3 +1,4 @@
+import { composeStyle } from "../paix/compiler/styleTags";
 import { createComponentActions } from "./componentActions";
 import { inferComponentInputs, resolveComponentArguments } from "./resolveComponentArguments";
 import { useEffect, type CSSProperties } from "react";
@@ -283,9 +284,11 @@ function RuntimeComponent({
   catch (error) { return <div className="paix-runtime-error">{error instanceof Error ? error.message : String(error)}</div>; }
   const directStyleName = typeof invocationValues.style === "string" ? invocationValues.style : undefined;
   delete invocationValues.style;
+  const invocationStyleTags = Array.isArray(invocationValues.styles) ? invocationValues.styles.filter((name): name is string => typeof name === "string") : [];
+  delete invocationValues.styles;
 
   if (NativeComponent) {
-    const directStyle =
+    let directStyle =
       directStyleName
         ? program.styles[directStyleName]
         : undefined;
@@ -299,6 +302,8 @@ function RuntimeComponent({
         </div>
       );
     }
+    try { directStyle = composeStyle(directStyle, invocationStyleTags, program.tags ?? {}); }
+    catch (error) { return <div className="paix-runtime-error">{String(error instanceof Error ? error.message : error)}</div>; }
     const directStyleClasses =
       directStyle
         ? resolvePaixStyleClasses(
@@ -312,6 +317,8 @@ function RuntimeComponent({
       directStyleClasses,
     );
     return (
+      <>
+      {invocationStyleTags.length > 0 && directStyle && <PaixStyleSheet styles={{ [directStyle.name]: directStyle }} />}
       <NativeComponent
         {...(
           invocationValues as
@@ -319,6 +326,7 @@ function RuntimeComponent({
         )}
         className={className}
       />
+      </>
     );
   }
   if (!definition) {
@@ -340,6 +348,7 @@ function RuntimeComponent({
     <UserDefinedComponent
       definition={definition}
       suppliedValues={invocationValues}
+      invocationStyleTags={invocationStyleTags}
       invocationStyleName={
         directStyleName
       }
@@ -355,6 +364,7 @@ interface UserDefinedComponentProps {
   definition: PaixComponentDefinitionNode;
   suppliedValues: PaixScope;
   invocationStyleName?: string;
+  invocationStyleTags?: string[];
   program: PaixCompiledProject;
   stack: string[];
   debug?: boolean;
@@ -364,6 +374,7 @@ function UserDefinedComponent({
   definition,
   suppliedValues,
   invocationStyleName,
+  invocationStyleTags = [],
   program,
   stack,
   debug = false,
@@ -417,7 +428,7 @@ function UserDefinedComponent({
   const resolvedStyleName =
     invocationStyleName ??
     definition.style;
-  const styleDefinition =
+  let styleDefinition =
     resolvedStyleName
       ? program.styles[resolvedStyleName]
       : undefined;
@@ -431,6 +442,8 @@ function UserDefinedComponent({
       </div>
     );
   }
+  try { styleDefinition = composeStyle(styleDefinition, invocationStyleTags, program.tags ?? {}); }
+  catch (error) { return <div className="paix-runtime-error">{String(error instanceof Error ? error.message : error)}</div>; }
   const styleClasses =
     styleDefinition
       ? resolvePaixStyleClasses(
@@ -458,6 +471,7 @@ function UserDefinedComponent({
         resolvedStyleName
       }
     >
+      {invocationStyleTags.length > 0 && styleDefinition && <PaixStyleSheet styles={{ [styleDefinition.name]: styleDefinition }} />}
       {stateError && <div className="paix-runtime-error">{stateError}</div>}
       <ScopedWireframe
   wireframe={wireframe}

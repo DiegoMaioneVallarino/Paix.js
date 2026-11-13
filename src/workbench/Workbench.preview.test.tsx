@@ -217,3 +217,33 @@ test("opens a headerless component with its companions and switches to actions a
   expect(within(canvas()).getByText("Preview text")).toBeTruthy();
   expect(canvas().querySelector('[data-paix-style-preview="Counter.style"]')).not.toBeNull();
 });
+
+test("previews each shared tag independently", () => {
+  currentProject = counterProject;
+  mockSelection.activeFilePath = "styles/surfaces.paix";
+  const view = render(<Workbench />);
+  const canvas = view.container.querySelector<HTMLElement>(".preview-canvas")!;
+  const selector = within(canvas).getByRole("combobox", { name: "Style tag" });
+  expect(canvas.querySelector('[data-paix-style-preview="Rounded"]')).not.toBeNull();
+  fireEvent.change(selector, { target: { value: "Glass" } });
+  expect(canvas.querySelector('[data-paix-style-preview="Glass"]')).not.toBeNull();
+  expect(canvas.querySelector("style")?.textContent).toContain("linear-gradient(180deg, #0d3a5c, #071b2b)");
+  expect(within(canvas).getByText("Preview text")).toBeTruthy();
+});
+
+test("Run launches the complete current project while a style is open", () => {
+  currentProject = counterProject;
+  mockSelection.activeFilePath = "styles/surfaces.paix";
+  const setItem = vi.fn();
+  const popup = { sessionStorage: { setItem }, location: { replace: vi.fn() }, focus: vi.fn(), close: vi.fn(), opener: window };
+  const open = vi.spyOn(window, "open").mockReturnValue(popup as unknown as Window);
+  try {
+    const view = render(<Workbench />);
+    fireEvent.click(view.getByRole("button", { name: "Run" }));
+    expect(JSON.parse(setItem.mock.calls[0][1])).toEqual(counterProject);
+    expect(popup.location.replace).toHaveBeenCalledWith(new URL("/run", location.origin).href);
+    open.mockReturnValue(null);
+    fireEvent.click(view.getByRole("button", { name: "Run" }));
+    expect(view.getByRole("alert").textContent).toContain("bloqueó");
+  } finally { open.mockRestore(); }
+});

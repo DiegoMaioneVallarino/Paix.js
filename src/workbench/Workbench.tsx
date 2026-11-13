@@ -1,5 +1,6 @@
+import { runProject } from "../features/run/runProject";
 import { parsePaixActions } from "../paix/parser/parseActions";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { CodeEditor } from "../features/code-editor/CodeEditor";
 import { DiagnosticsPanel } from "../features/diagnostics/DiagnosticsPanel";
@@ -20,11 +21,10 @@ import { FileTypeIcon } from "../features/file-explorer/FileTypeIcon";
 
 import { validatePaixWireframe } from "../paix/semantic/validateWireframe";
 
-import {
-  validatePaixStyle,
-} from "../paix/semantic/validateStyle";
+
 
 export function Workbench() {
+  const [runError, setRunError] = useState<string | null>(null);
   const project = useProjectStore(
     (state) => state.project,
   );
@@ -97,28 +97,9 @@ export function Workbench() {
   };
     }
 if (activeFile.type === "style") {
-  const syntaxResult = parsePaixStyle(
-    activeFile.content,
-    activeFile.path,
-  );
-
-  if (!syntaxResult.ast) {
-    return syntaxResult;
-  }
-
-  return {
-    ast: syntaxResult.ast,
-
-    diagnostics: [
-      ...syntaxResult.diagnostics,
-
-      ...validatePaixStyle(
-        syntaxResult.ast,
-        activeFile.content,
-      ),
-    ],
-  };
-}
+      const syntaxResult = parsePaixStyle(activeFile.content, activeFile.path);
+      return { ast: syntaxResult.ast, diagnostics: compiledProject.diagnostics.filter(diagnostic => diagnostic.filePath === activeFile.path) };
+    }
     if (activeFile.type === "page") {
       const syntaxResult = parsePaixPage(
         activeFile.content,
@@ -192,8 +173,6 @@ const inspectedComponent:
     <section className="workbench">
       <header className="workbench-header">
         <div className="brand">
-                  <div className="brandSg">
-
                     <img
                     className="brand-logo"
                     src="/images/logo.png"
@@ -204,7 +183,6 @@ const inspectedComponent:
               p<b className="ai-brand-text">ai</b>x
               <b className="js-type-text">.js</b>
             </strong>
-          </div>
           </div>
         </div>
 
@@ -243,11 +221,13 @@ const inspectedComponent:
   <button
     type="button"
     className="toolbar-button primary"
+    onClick={() => setRunError(runProject(project))}
   >
     Run
   </button>
 </div>
       </header>
+      {runError && <div role="alert">{runError}</div>}
 
       <div className="workbench-content">
         <FileExplorer />

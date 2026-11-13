@@ -5,12 +5,28 @@ const file = (path: string, type: PaixFileType, content: string): PaixFile => ({
 export const counterProject: PaixProject = {
   id: "counter-project", name: "paix-components", entry: "pages/home.paix",
   files: { ...collectionExampleFiles, ...Object.fromEntries([
+    file("styles/surfaces.paix", "style", `tag Rounded:
+    radius: 16
+
+tag Glass:
+    styles: Rounded
+    backgroundColor: #071b2b
+    backgroundImage: gradient down from #0d3a5c to #071b2b
+    color: white
+
+tag Accent:
+    outlineSpread: 2
+    outlineColor: gradient right from cyan to blue
+
+tag Highlight:
+    color: cyan
+    outlineSpread: 3`),
     file("pages/home.paix", "page", `page "home" MainFrame
 headerArea >
     Text(value: "Paix · componentes independientes")
 contentArea.spaces >
     Counter(label: "Primer contador")
-    Counter(label: "Segundo contador")
+    Counter(label: "Segundo contador", styles: Accent)
     CollectionDemo()`),
     file("wireframes/MainFrame.paix", "wireframe", `wireframe "MainFrame"
 main slice horizontal 48 >
@@ -24,6 +40,7 @@ valueArea >
 actionsArea.spaces >
     Button(
         label: "Add"
+        styles: Glass, Accent
         onClick: actions.add
     )
     Button(
@@ -51,16 +68,13 @@ action reset:
 action addTwice:
     actions.add
     actions.add`),
-    file("components/Counter/Counter.style.paix", "style", `backgroundColor: #071b2b
-backgroundImage: gradient down from #0d3a5c to #071b2b
-color: white
-radius: 16
+    file("components/Counter/Counter.style.paix", "style", `styles: Glass
 outlineSpread: 1
 outlineColor: gradient right from cyan to blue
 textSize: 18
 transitionTime: 180
 when hover:
-    outlineSpread: 2
+    styles: Highlight
 when states.count is 3:
     backgroundImage: none
     backgroundColor: teal`),

@@ -495,7 +495,12 @@ public stack(ctx: CstChildren): PaixStackNode {
     };
   }
 
+  public stylesArgument(ctx: CstChildren): PaixArgumentNode {
+    return { type: "Argument", name: "styles", state: false,
+      value: { type: "ArrayExpression", items: (ctx.tagName as IToken[]).map(token => token.image) } };
+  }
   public componentArgument(ctx: CstChildren): PaixComponentArgumentNode {
+    if (ctx.stylesArgument) return this.visit(ctx.stylesArgument[0] as CstNode);
     if (ctx.argument) return this.visit(ctx.argument[0] as CstNode);
     return { type: "ObjectArgument", value: this.visit(ctx.expression[0] as CstNode) };
   }
