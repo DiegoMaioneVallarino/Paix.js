@@ -6,6 +6,7 @@ export type PaixFileType =
   | "action";
 
 export interface PaixFile {
+  enabled?: boolean;
   id: string;
   name: string;
   path: string;

@@ -31,6 +31,7 @@ import {
 type PreviewDevice = "desktop" | "mobile";
 
 interface PreviewPanelProps {
+  inactive?: boolean;
   program: PaixCompiledProject;
   activeFileType: PaixFileType;
   inspectedWireframe: PaixWireframeNode | null;
@@ -39,6 +40,7 @@ interface PreviewPanelProps {
 }
 
 function PreviewSession({
+  inactive = false,
   program,
   activeFileType,
   inspectedWireframe,
@@ -54,7 +56,9 @@ function PreviewSession({
   const inspect = (activeFileType === "component" || activeFileType === "action") || activeFileType === "style";
   let content;
 
-  if ((activeFileType === "component" || activeFileType === "action")) {
+  if (inactive) {
+    content = <div className="paix-runtime-empty">Hoja desactivada. Actívala con su círculo para que participe en el componente.</div>;
+  } else if ((activeFileType === "component" || activeFileType === "action")) {
     content = inspectedComponent ? (
       <PaixComponentPreview
         definition={inspectedComponent}

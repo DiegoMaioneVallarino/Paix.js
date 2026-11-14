@@ -20,8 +20,8 @@ const creationCases: Array<{
   {
     type: "page",
     name: "News",
-    path: "pages/News.paix",
-    declaration: 'page "News" MainFrame',
+    path: "pages/News/News.paix",
+    declaration: 'address: "/news"',
   },
   {
     type: "component",
@@ -139,7 +139,7 @@ describe("Paix virtual file system", () => {
   });
 });
 test("creates a complete component bundle without overwriting existing companions", () => {
-  const result = createPaixFile(counterProject, "component", "NewCard");
+  const result = createPaixFile(counterProject, "component", "NewCard", {ownFrame:true,ownStyle:true,ownActions:true});
   if (!result.ok) throw new Error(result.error);
   expect(result.companions?.map(file => file.path)).toEqual([
     "components/NewCard/NewCard.frame.paix", "components/NewCard/NewCard.style.paix", "components/NewCard/NewCard.actions.paix",
@@ -147,5 +147,5 @@ test("creates a complete component bundle without overwriting existing companion
   const project = structuredClone(counterProject);
   const companion = result.companions![0];
   project.files[companion.path] = companion;
-  expect(createPaixFile(project, "component", "NewCard").ok).toBe(false);
+  expect(createPaixFile(project, "component", "NewCard", {ownFrame:true}).ok).toBe(false);
 });

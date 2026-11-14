@@ -6,13 +6,29 @@ interface Section { id: string; label: string; title: string; description: strin
 
 const sections: Section[] = [
   {
+    id: "pages-reuse", label: "Rutas y hojas", title: "Páginas y recursos compartidos",
+    description: "Una dirección por página y hojas opcionales por componente.",
+    paragraphs: [
+      "address define la URL de una página. goTo, dentro de una acción, cambia la página y su frame. También admite /catalogue#main para ir a un área. Run usa rutas con #; Export genera directorios con index.html para cada dirección.",
+      "frame: SharedFrame sustituye el frame hermano sin borrar su código; el explorador lo marca Sin uso. styles acumula tags compartidos y después aplica la hoja propia. actions reutiliza acciones y estados; los valores siguen aislados por instancia. Las definiciones repetidas generan errores.",
+      "Usa el círculo de una hoja hermana para activarla o desactivarla. Desactivar conserva el archivo y excluye su contenido de la compilación, Run y Export. Puedes editarla y reactivarla después. El filtro permite ocultar hojas vacías o desactivadas.",
+      "Hojas hermanas permite crear una hoja vacía cuando la necesites. Una hoja vacía activa no aporta contenido. Un componente necesita un frame propio activo o uno compartido; si falta, se informa del error."
+    ],
+    rows: [["Contenido y activo", "Texto normal, círculo lleno; participa."], ["Vacío", "Texto atenuado, círculo lleno; asociado sin contenido."], ["Desactivado", "Texto atenuado, círculo vacío; conserva código sin participar."], ["Con errores", "Indicador !; el círculo conserva la activación elegida."]],
+    examples: [
+      {title: "Página por dirección", file: "pages/Catalogue/Catalogue.paix", code: 'address: "/catalogue"\nframe: CatalogueFrame\nstyles: Glass\nmain >\n    Text(value: "Catálogo")'},
+      {title: "Componente reutilizando hojas", file: "components/OpenCatalogue/OpenCatalogue.paix", code: 'frame: ButtonFrame\nstyles: Glass, Rounded\nactions: Navigation\nmain >\n    Button(label: "Catálogo", onClick: actions.openCatalogue)'},
+      {title: "Acción compartida", file: "actions/Navigation.paix", code: 'action openCatalogue:\n    goTo: "/catalogue"'}
+    ]
+  },
+  {
     "id": "introduction",
     "label": "Introducción",
     "title": "Una carpeta, un componente.",
     "description": "La estructura muestra contenido; actions concentra el comportamiento.",
     "paragraphs": [
-      "Cada componente tiene un nombre único en el proyecto. Crear Counter desde el editor genera Counter.paix, Counter.frame.paix, Counter.style.paix y Counter.actions.paix dentro de components/Counter/.",
-      "El compilador asocia los derivados por su ruta y nombre. El componente no declara frame, style ni actions. Su frame es obligatorio; style y actions son opcionales. Los archivos derivados tampoco necesitan cabecera.",
+      "Cada componente tiene un nombre único en el proyecto. Al crear Counter eliges qué hojas propias generar y qué recursos compartir. Por defecto solo se crea Counter.paix; puedes añadir sus hojas después.",
+      "El compilador asocia los derivados por su ruta y nombre. Sin referencias explícitas se usan las hojas hermanas activas. frame: Nombre selecciona un frame compartido; styles: TagA, TagB acumula tags; actions: Nombre reutiliza una hoja de acciones. Cada instancia conserva sus propios estados. Los archivos derivados tampoco necesitan cabecera.",
       "Los proyectos antiguos siguen siendo compatibles: this, otherwise, state:, .slots, listas entre corchetes y asociaciones explícitas siguen funcionando en archivos antiguos. Los ejemplos nuevos usan la sintaxis por carpeta. No se modifican automáticamente los proyectos guardados en el navegador."
     ],
     "examples": [
@@ -45,7 +61,7 @@ const sections: Section[] = [
     "id": "pages",
     "label": "Pages y espacios",
     "title": "Coloca contenido con >.",
-    "description": "La página conserva su cabecera y el nombre de su frame.",
+    "description": "La dirección identifica la página; su archivo organiza el proyecto.",
     "paragraphs": [
       "area > coloca contenido en el área. area.spaces > distribuye los componentes entre los espacios que crea el frame, en orden. Se conserva la distinción entre área y espacios.",
       "Un stack es una lista explícita de componentes indentados. Ya no necesita [] ni comas entre hermanos. Cada nuevo componente comienza en otra línea y con la misma indentación. Los atributos pueden separarse por líneas dentro de los paréntesis; en una misma línea se separan con comas.",

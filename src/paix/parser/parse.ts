@@ -1,3 +1,4 @@
+import { parsePaixComponent } from "./parseComponent";
 import type { IToken } from "chevrotain";
 import type { PaixPageNode } from "../ast/ast.types";
 import { paixAstVisitor } from "../ast/createAst";
@@ -12,7 +13,14 @@ export interface PaixPageParseResult {
 
 export function parsePaixPage(
   source: string,
+  filePath?: string,
 ): PaixPageParseResult {
+  if (!/^\s*page\b/m.test(source)) {
+    const parsed = parsePaixComponent(source, filePath);
+    if (!parsed.ast) return { ast:null, diagnostics:parsed.diagnostics };
+    const { type: _type, ...component } = parsed.ast;
+    return { ast: { ...component, type: "Page" as const }, diagnostics: parsed.diagnostics };
+  }
   const lexResult = paixLexer.tokenize(source);
 
   const lexerDiagnostics: PaixDiagnostic[] =

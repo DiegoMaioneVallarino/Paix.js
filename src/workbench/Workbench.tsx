@@ -15,7 +15,7 @@ import type {
 import { parsePaixPage } from "../paix/parser/parse";
 import { parsePaixComponent } from "../paix/parser/parseComponent";
 import { parsePaixWireframe } from "../paix/parser/parseWireframe";
-import { validatePaixPage } from "../paix/semantic/validate";
+
 
 import { useProjectStore } from "../project/project.store";
 import { FileTypeIcon } from "../features/file-explorer/FileTypeIcon";
@@ -111,27 +111,8 @@ if (activeFile.type === "style") {
       return { ast: syntaxResult.ast, diagnostics: compiledProject.diagnostics.filter(diagnostic => diagnostic.filePath === activeFile.path) };
     }
     if (activeFile.type === "page") {
-      const syntaxResult = parsePaixPage(
-        activeFile.content,
-      );
-
-      if (!syntaxResult.ast) {
-        return syntaxResult;
-      }
-
-      return {
-        ast: syntaxResult.ast,
-
-        diagnostics: [
-          ...syntaxResult.diagnostics,
-
-          ...validatePaixPage(
-            syntaxResult.ast,
-            project,
-            activeFile.content,
-          ),
-        ],
-      };
+      const parsed=parsePaixPage(activeFile.content,activeFile.path);
+      return {ast:parsed.ast,diagnostics:compiledProject.diagnostics.filter(d=>d.filePath===activeFile.path)};
     }
 
     return {
@@ -278,12 +259,13 @@ const inspectedComponent:
           />
         </section>
 
-       <PreviewPanel
-  program={compiledProject}
+       <PreviewPanel key={activeFile.path}
+  inactive={activeFile.enabled === false}
+  program={activeFile.type === "page" ? {...compiledProject,entryPage:Object.values(compiledProject.pages??{}).find(page=>page.address===parsePaixPage(activeFile.content,activeFile.path).ast?.address || page.name===parsePaixPage(activeFile.content,activeFile.path).ast?.name)??compiledProject.entryPage} : compiledProject}
   activeFileType={activeFile.type}
-  inspectedWireframe={inspectedWireframe}
+  inspectedWireframe={activeFile.enabled===false ? null : inspectedWireframe}
   inspectedComponent={inspectedComponent}
-  inspectedStyle={inspectedStyle}
+  inspectedStyle={activeFile.enabled===false ? null : inspectedStyle}
 />
       </div>
 

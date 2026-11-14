@@ -1,3 +1,4 @@
+import { readDocumentOptions } from "./documentOptions";
 import { validateCollectionDeclarations } from "../semantic/validateCollections";
 import type { IToken } from "chevrotain";
 import type { PaixComponentDefinitionNode } from "../ast/ast.types";
@@ -15,7 +16,8 @@ export function parsePaixComponent(
   source: string,
   filePath?: string,
 ): PaixComponentParseResult {
-  const lexResult = paixLexer.tokenize(source);
+  const directives = readDocumentOptions(source);
+  const lexResult = paixLexer.tokenize(directives.body);
 
   const lexerDiagnostics: PaixDiagnostic[] =
     lexResult.errors.map((error) => ({
@@ -46,6 +48,7 @@ export function parsePaixComponent(
     });
 
   const diagnostics = [
+    ...directives.diagnostics,
     ...lexerDiagnostics,
     ...parserDiagnostics,
   ];
@@ -60,6 +63,8 @@ export function parsePaixComponent(
   const ast = paixAstVisitor.visit(cst) as PaixComponentDefinitionNode;
   if (!ast.name && filePath) ast.name = filePath.replace(/\\/g, "/").split("/").at(-1)!.replace(/\.paix$/, "");
   if (!ast.wireframe && ast.name) ast.wireframe = ast.name + ".frame";
+  Object.assign(ast, directives.options);
+  if (ast.frame) ast.wireframe = ast.frame;
   const collectionDiagnostics = validateCollectionDeclarations(ast, source);
   return { ast: collectionDiagnostics.length ? null : ast, diagnostics: collectionDiagnostics };
 }

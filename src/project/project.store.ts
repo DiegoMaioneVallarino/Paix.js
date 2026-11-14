@@ -14,7 +14,7 @@ import type {
 } from "./project.types";
 
 import {
-  createPaixFile,
+  createPaixFile, makeCompanion, type CreationOptions,
   type CreatablePaixFileType,
 } from "./virtualFileSystem";
 
@@ -24,6 +24,8 @@ export interface ProjectStore {
   openFolders: string[];
   modifiedFiles: string[];
 
+  toggleFile: (path: string) => void;
+  addCompanion: (ownerPath: string, kind: "frame" | "style" | "actions") => void;
   openFile: (path: string) => void;
 
   updateFile: (
@@ -34,6 +36,7 @@ export interface ProjectStore {
   createFile: (
     type: CreatablePaixFileType,
     name: string,
+    options?: CreationOptions,
   ) => string | null;
 
   toggleFolder: (folder: string) => void;
@@ -61,6 +64,16 @@ export const useProjectStore =
 
         modifiedFiles: [],
 
+        toggleFile: (path) => set(state => {
+          const file=state.project.files[path]; if(!file) return state;
+          return {project:{...state.project,files:{...state.project.files,[path]:{...file,enabled:file.enabled===false}}},modifiedFiles:[...new Set([...state.modifiedFiles,path])]};
+        }),
+        addCompanion: (ownerPath,kind) => {
+          const owner=get().project.files[ownerPath]; if(!owner || !['component','page'].includes(owner.type)) return;
+          const file=makeCompanion(owner,kind);
+          if(get().project.files[file.path]) { get().openFile(file.path); return; }
+          set(state=>({project:{...state.project,files:{...state.project.files,[file.path]:file}},activeFilePath:file.path,modifiedFiles:[...state.modifiedFiles,file.path]}));
+        },
         openFile: (path) => {
           const fileExists = Boolean(
             get().project.files[path],
@@ -92,7 +105,8 @@ export const useProjectStore =
 
             const isDifferentFromOriginal =
               originalContent === undefined ||
-              originalContent !== content;
+              originalContent !== content ||
+              (currentFile.enabled !== false) !== (counterProject.files[path]?.enabled !== false);
 
             const isAlreadyModified =
               state.modifiedFiles.includes(path);
@@ -141,11 +155,12 @@ export const useProjectStore =
           });
         },
 
-        createFile: (type, name) => {
+        createFile: (type, name, options) => {
           const result = createPaixFile(
             get().project,
             type,
             name,
+            options,
           );
 
           if (!result.ok) {

@@ -10,6 +10,7 @@ import type {
 } from "../diagnostics/diagnostic.types";
 
 export interface PaixCompiledProject {
+  pages?: Record<string, PaixPageNode>;
   entryPage: PaixPageNode | null;
 
   components: Record<

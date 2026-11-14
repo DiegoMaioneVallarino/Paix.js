@@ -61,7 +61,7 @@ test('generated production runtime starts independently and its actions work', a
   const html=new TextDecoder().decode(files[0].data);
   const serialized=html.match(/type="application\/json">(.*?)<\/script>/s)![1];
   const { JSDOM } = await import('jsdom');
-  const dom=new JSDOM(`<div id="root"></div><script type="application/json" id="paix-program">${serialized}</script>`,{runScripts:'outside-only',url:'https://export.test/subfolder/'});
+  const dom=new JSDOM(`<base href="./"><script src="https://export.test/subfolder/assets/runtime.js"></script><div id="root"></div><script type="application/json" id="paix-program">${serialized}</script>`,{runScripts:'outside-only',url:'https://export.test/subfolder/'});
   const runtime=readFileSync(resolve('public/paix-export-runtime/runtime.js'),'utf8');
   expect(runtime).not.toContain('monaco-editor');
   expect(runtime).not.toContain('Expecting token of type');
@@ -92,4 +92,25 @@ test('keeps remote images explicit without downloading them', async () => {
   const files=await buildExportFiles(project);
   expect(fetcher.mock.calls.some(([url])=>url.includes('example.org'))).toBe(false);
   expect(new TextDecoder().decode(files.find(f=>f.path==='README.txt')!.data)).toContain('https://example.org/panel.png');
+});
+
+test('exports route directories and opens nested routes directly under a hosting subfolder', async () => {
+  vi.stubGlobal('fetch',mockRuntime());
+  const project=structuredClone(counterProject);
+  project.files['pages/Details/Details.paix']={id:'details',path:'pages/Details/Details.paix',name:'Details.paix',type:'page',content:'address: "/catalogue/details"\nframe: DetailFrame\nmain >\n    Button(label: "Return home", onClick: actions.home)'};
+  project.files['pages/Details/Details.actions.paix']={id:'detail-actions',path:'pages/Details/Details.actions.paix',name:'Details.actions.paix',type:'action',content:'action home:\n    goTo: "/"'};
+  project.files['wireframes/DetailFrame.paix']={id:'detail-frame',path:'wireframes/DetailFrame.paix',name:'DetailFrame.paix',type:'wireframe',content:'wireframe "DetailFrame"'};
+  const files=await buildExportFiles(project);
+  const html=new TextDecoder().decode(files.find(f=>f.path==='catalogue/details/index.html')!.data);
+  expect(html).toContain('<base href="../../">');
+  const {JSDOM}=await import('jsdom');
+  const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://export.test/store/catalogue/details/'});
+  try {
+    dom.window.eval(readFileSync(resolve('public/paix-export-runtime/runtime.js'),'utf8'));
+    await vi.waitFor(()=>expect(dom.window.document.querySelector('button')?.textContent).toBe('Return home'));
+    dom.window.document.querySelector('button')!.click();
+    await vi.waitFor(()=>expect(dom.window.location.pathname).toBe('/store/'));
+    expect(dom.window.document.baseURI).toBe('https://export.test/store/');
+    await vi.waitFor(()=>expect(dom.window.document.querySelector('[data-paix-component="Counter"]')).not.toBeNull());
+  } finally {dom.window.close();}
 });

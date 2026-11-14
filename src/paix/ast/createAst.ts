@@ -706,6 +706,7 @@ if (ctx.inputReference) {
     return { name: (ctx.name[0] as IToken).image, steps: (ctx.actionStep as CstNode[]).map(node => this.visit(node)) };
   }
   public actionStep(ctx: CstChildren): PaixActionNode["steps"][number] {
+    if (ctx.goTo) return { goTo: JSON.parse((ctx.goTo[0] as IToken).image) };
     return ctx.action ? { action: (ctx.action[0] as IToken).image }
       : { state: "_" + (ctx.state[0] as IToken).image, value: this.visit(ctx.expression[0] as CstNode) };
   }

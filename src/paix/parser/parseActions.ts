@@ -5,7 +5,7 @@ import { paixParser } from "./grammar";
 import { paixAstVisitor } from "../ast/createAst";
 import { validateCollectionDeclarations } from "../semantic/validateCollections";
 
-export function parsePaixActions(source: string, filePath = ""): { ast: PaixActionsNode | null; diagnostics: PaixDiagnostic[] } {
+export function parsePaixActions(source: string, filePath = "", linked = false): { ast: PaixActionsNode | null; diagnostics: PaixDiagnostic[] } {
   const lex = paixLexer.tokenize(source);
   paixParser.input = lex.tokens;
   const cst = paixParser.actions();
@@ -15,7 +15,7 @@ export function parsePaixActions(source: string, filePath = ""): { ast: PaixActi
   ];
   if (diagnostics.length) return { ast: null, diagnostics };
   const ast = paixAstVisitor.visit(cst) as PaixActionsNode;
-  ast.name = filePath.replace(/\\/g, "/").split("/").at(-1)?.replace(/\.actions\.paix$/, "") ?? "";
+  ast.name = filePath.replace(/\\/g, "/").split("/").at(-1)?.replace(/(?:\.actions)?\.paix$/, "") ?? "";
   const report = (message: string) => diagnostics.push({ source: "semantic", severity: "error", message, line: 1, column: 1, length: 1 });
   const states = new Set<string>();
   for (const state of ast.states) {
@@ -29,11 +29,12 @@ export function parsePaixActions(source: string, filePath = ""): { ast: PaixActi
     if (chain.has(name)) { report(`Recursive action: ${[...chain, name].join(" -> ")}.`); return; }
     if (visited.has(name)) return;
     const action = actions.get(name);
-    if (!action) { report(`Unknown action "actions.${name}".`); return; }
+    if (!action) { if (linked) return; report(`Unknown action "actions.${name}".`); return; }
     const next = new Set(chain).add(name);
     for (const step of action.steps) {
+      if ("goTo" in step) continue;
       if ("action" in step) visit(step.action, next);
-      else if (!states.has(step.state)) report(`Unknown state "states.${step.state.slice(1)}".`);
+      else if (!linked && !states.has(step.state)) report(`Unknown state "states.${step.state.slice(1)}".`);
     }
     visited.add(name);
   };

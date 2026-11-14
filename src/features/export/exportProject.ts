@@ -60,8 +60,15 @@ export async function buildExportFiles(project: PaixProject): Promise<ExportFile
   }
   const links = manifest.files.filter(name => name.endsWith(".css")).map(name => `<link rel="stylesheet" href="./assets/${name}">`).join("\n");
   const scripts = manifest.files.filter(name => name.endsWith(".js")).map(name => `<script defer src="./assets/${name}"></script>`).join("\n");
-  files.unshift(textFile("index.html", `<!doctype html>\n<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${encodeHtml(project.name)}</title>\n${links}\n</head><body><div id="root"></div><script id="paix-program" type="application/json">${encodeJson(program)}</script>\n${scripts}\n</body></html>`));
-  files.push(textFile("README.txt", `Web exportada con Paix.\nPublica index.html y assets/ juntos en un servidor estático.\nNo requiere npm, React instalado ni el editor.\nLos estados se reinician al recargar.\nRecursos locales utilizados en url(): incluidos.\nLas fuentes personalizadas requieren su propia declaración @font-face y archivos; no se empaquetan por nombre de familia.\n${external.size ? "Recursos externos (requieren conexión):\n" + [...external].join("\n") : "Sin imágenes externas en los estilos."}\n`));
+  files.unshift(textFile("index.html", `<!doctype html>\n<html lang="es"><head><base href="./"><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${encodeHtml(project.name)}</title>\n${links}\n</head><body><div id="root"></div><script id="paix-program" type="application/json">${encodeJson(program)}</script>\n${scripts}\n</body></html>`));
+  const rootHtml = new TextDecoder().decode(files.find(file=>file.path==="index.html")!.data);
+  for(const address of Object.keys(program.pages ?? {})) {
+    if(address==="/") continue;
+    const segments=address.slice(1).split('/');
+    const prefix='../'.repeat(segments.length);
+    files.push(textFile(`${segments.join('/')}/index.html`,rootHtml.replace('<base href="./">',`<base href="${prefix}">`)));
+  }
+  files.push(textFile("README.txt", `Web exportada con Paix.\nPublica TODO el contenido del ZIP, incluidos los directorios de páginas, en un servidor estático.\nNo requiere npm, React instalado ni el editor.\nLos estados se reinician al recargar.\nRecursos locales utilizados en url(): incluidos.\nLas fuentes personalizadas requieren su propia declaración @font-face y archivos; no se empaquetan por nombre de familia.\n${external.size ? "Recursos externos (requieren conexión):\n" + [...external].join("\n") : "Sin imágenes externas en los estilos."}\n`));
   return files;
 }
 

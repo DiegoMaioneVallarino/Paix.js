@@ -1,5 +1,7 @@
+import { bindCompanions } from "./companions";
+import { readDocumentOptions } from "../parser/documentOptions";
 import { expandStyle, expandStyleProperties, styleTagNames } from "./styleTags";
-import type { PaixStyleNode } from "../ast/ast.types";
+import type { PaixStyleNode, PaixPageNode } from "../ast/ast.types";
 import { parsePaixActions } from "../parser/parseActions";
 import type { PaixProject } from "../../project/project.types";
 import { parsePaixComponent } from "../parser/parseComponent";
@@ -20,6 +22,13 @@ import {
 export function compilePaixProject(
   project: PaixProject,
 ): PaixCompiledProject {
+  const inactive = new Set(Object.values(project.files).filter(file => file.enabled === false).map(file => file.path));
+  for (const file of Object.values(project.files)) if (file.type === "component" || file.type === "page") {
+    if (readDocumentOptions(file.content).options.frame) inactive.add(file.path.replace(/\.paix$/, ".frame.paix"));
+  }
+  project = { ...project, files: Object.fromEntries(Object.entries(project.files).filter(([path]) => !inactive.has(path))) };
+  const pages: Record<string, PaixPageNode> = {};
+  const pagePaths = new Map<PaixPageNode, string>();
   const diagnostics: PaixCompiledProject["diagnostics"] = [];
 
   const components: PaixCompiledProject["components"] = {};
@@ -56,15 +65,19 @@ const componentSourcePaths: Record<
     };
   }
 
-  const pageResult = parsePaixPage(entryFile.content);
-
-  diagnostics.push(
-    ...pageResult.diagnostics.map((diagnostic) => ({
-      ...diagnostic,
-      filePath: entryFile.path,
-    })),
-  );
-
+  let entryPage: PaixPageNode | null = null;
+  for (const file of Object.values(project.files)) if (file.type === "page") {
+    const result = parsePaixPage(file.content,file.path);
+    diagnostics.push(...result.diagnostics.map(d=>({...d,filePath:file.path})));
+    if (!result.ast) continue;
+    const page = result.ast;
+    page.address ??= file.path === project.entry ? "/" : "/" + file.name.replace(/\.paix$/, "").toLowerCase();
+    if (pages[page.address]) diagnostics.push({source:"semantic",severity:"error",message:`Duplicate page address "${page.address}".`,filePath:file.path,line:1,column:1,length:1});
+    else pages[page.address] = page;
+    pagePaths.set(page,file.path);
+    if(file.path===project.entry) entryPage = page;
+  }
+  const pageResult = { ast: entryPage };
   for (const file of Object.values(project.files)) {
     if (file.type !== "component") {
       continue;
@@ -261,53 +274,23 @@ for (const [name, style] of Object.entries(styles)) {
   catch (error) { diagnostics.push({ source: "semantic", severity: "error", message: String(error instanceof Error ? error.message : error), filePath: stylePaths.get(name), line: 1, column: 1, length: 1 }); }
 }
 
-// Companion files bind by exact sibling path; their display headers are optional.
 for (const [name, component] of Object.entries(components)) {
-  const path = componentSourcePaths[name];
-  const folder = path.slice(0, path.lastIndexOf("/"));
-  const fileName = path.slice(path.lastIndexOf("/") + 1);
-  const associated = fileName === `${name}.paix` && folder.endsWith(`/${name}`);
-  if (!associated) {
-    if (!/^\s*component\b/m.test(project.files[path].content)) diagnostics.push({ source: "semantic", severity: "error", message: `Place this component at components/${name}/${name}.paix to associate its companions.`, line: 1, column: 1, length: 1, filePath: path });
-    continue; // Compatibility for existing flat projects.
-  }
-  const diagnostic = (message: string, filePath = path) => diagnostics.push({ source: "semantic", severity: "error", message, line: 1, column: 1, length: 1, filePath });
-  const frameFile = project.files[`${folder}/${name}.frame.paix`];
-  if (!frameFile || frameFile.type !== "wireframe") diagnostic(`Component "${name}" requires sibling "${name}.frame.paix".`);
-  else {
-    const parsed = parsePaixWireframe(frameFile.content, frameFile.path);
-    if (parsed.ast) component.wireframe = parsed.ast.name;
-  }
-  const styleFile = project.files[`${folder}/${name}.style.paix`];
-  component.style = null;
-  if (styleFile) {
-    if (styleFile.type !== "style") diagnostic(`"${styleFile.path}" must have type "style".`);
-    else component.style = parsePaixStyle(styleFile.content, styleFile.path).ast?.name ?? null;
-  }
-  const actionsFile = project.files[`${folder}/${name}.actions.paix`];
-  if (component.states.length) diagnostic("Move component states to its .actions.paix file.");
-  component.states = [];
-  component.actions = [];
-  if (actionsFile) {
-    if (actionsFile.type !== "action") diagnostic(`"${actionsFile.path}" must have type "action".`);
-    else {
-      const parsed = parsePaixActions(actionsFile.content, actionsFile.path);
-      if (parsed.ast) { component.states = parsed.ast.states; component.actions = parsed.ast.actions; }
-    }
-  }
-  for (const placement of component.placements) {
-    const children = placement.type === "Placement" ? [placement.component] : placement.stack.items;
-    for (const child of children) for (const argument of child.arguments) {
-      const value = argument.value;
-      if (argument.type === "Argument" && /^on[A-Z]/.test(argument.name) && value && typeof value === "object" && value.type === "MemberExpression" && value.object && typeof value.object === "object" && value.object.type === "Reference" && value.object.name === "actions" && !component.actions.some(action => action.name === value.property)) {
-        diagnostic(`Unknown action "actions.${value.property}" in component "${name}".`);
-      }
-    }
+  bindCompanions(component,componentSourcePaths[name],project,wireframes,styles,tags,diagnostics);
+}
+for (const [page,path] of pagePaths) {
+  bindCompanions(page,path,project,wireframes,styles,tags,diagnostics);
+}
+for(const [document,path] of [...Object.entries(components).map(([name,doc])=>[doc,componentSourcePaths[name]] as const), ...pagePaths.entries()]) {
+  for(const action of document.actions ?? []) for(const step of action.steps) if('goTo' in step) {
+    const [address,area] = step.goTo.split('#');
+    const target=pages[address];
+    const frame=target && wireframes[target.wireframe];
+    if(!target || (area && area!=="main" && !frame?.slices.some(slice=>slice.areas.includes(area)))) diagnostics.push({source:"semantic",severity:"error",message:`Unknown navigation destination "${step.goTo}".`,filePath:path,line:1,column:1,length:1});
   }
 }
 for (const file of Object.values(project.files)) {
   if (file.type !== "action") continue;
-  const parsed = parsePaixActions(file.content, file.path);
+  const parsed = parsePaixActions(file.content, file.path, true);
   diagnostics.push(...parsed.diagnostics.map(diagnostic => ({ ...diagnostic, filePath: file.path })));
 }
 
@@ -342,7 +325,7 @@ for (
 
   for (const [document, filePath] of [
     ...Object.entries(components).map(([name, component]) => [component, componentSourcePaths[name]] as const),
-    ...(pageResult.ast ? [[pageResult.ast, entryFile.path] as const] : []),
+    ...pagePaths.entries(),
   ]) {
     for (const placement of document.placements) {
       const children = placement.type === "Placement" ? [placement.component] : placement.stack.items;
@@ -355,21 +338,13 @@ for (
       }
     }
   }
-  if (pageResult.ast) {
-    diagnostics.push(
-      ...validatePaixPage(
-        pageResult.ast,
-        project,
-        entryFile.content,
-      ).map((diagnostic) => ({
-        ...diagnostic,
-        filePath: entryFile.path,
-      })),
-    );
+  for (const [page,path] of pagePaths) {
+    diagnostics.push(...validatePaixPage(page, project, project.files[path].content).map(d=>({...d,filePath:path})));
   }
 
   return {
   entryPage: pageResult.ast,
+  pages,
   components,
   wireframes,
   styles,

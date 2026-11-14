@@ -800,7 +800,7 @@ private primary = this.RULE("primary", () => {
     this.CONSUME(Colon);
     const first = this.LA(1);
     this.AT_LEAST_ONE({
-      GATE: () => [StatesKeyword, ActionsKeyword].includes(this.LA(1).tokenType) &&
+      GATE: () => ([StatesKeyword, ActionsKeyword].includes(this.LA(1).tokenType) || this.LA(1).image === "goTo") &&
         (this.LA(1).startLine ?? 0) > (header.startLine ?? 0) &&
         (this.LA(1).startColumn ?? 0) > (header.startColumn ?? 0) &&
         this.LA(1).startColumn === first.startColumn,
@@ -810,6 +810,11 @@ private primary = this.RULE("primary", () => {
 
   private actionStep = this.RULE("actionStep", () => {
     this.OR([
+      { GATE: () => this.LA(1).image === "goTo", ALT: () => {
+        this.CONSUME3(Identifier);
+        this.CONSUME2(Colon);
+        this.CONSUME(StringLiteral, { LABEL: "goTo" });
+      } },
       { ALT: () => {
         this.CONSUME(StatesKeyword);
         this.CONSUME(Dot);

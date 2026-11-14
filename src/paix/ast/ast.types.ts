@@ -116,6 +116,13 @@ export type PaixPlacementNode =
   | PaixStackPlacementNode;
 
 export interface PaixPageNode {
+  address?: string;
+  frame?: string;
+  styleTags?: string[];
+  actionSheets?: string[];
+  style?: string | null;
+  states?: PaixStateNode[];
+  actions?: PaixActionNode[];
   type: "Page";
   name: string;
   wireframe: string;
@@ -155,6 +162,9 @@ export interface PaixStyleNode {
 }
 
 export interface PaixComponentDefinitionNode {
+  frame?: string;
+  styleTags?: string[];
+  actionSheets?: string[];
   type: "ComponentDefinition";
   name: string;
   wireframe: string;
@@ -229,7 +239,7 @@ export interface PaixWireframeNode {
 
 export interface PaixActionNode {
   name: string;
-  steps: Array<{ state: string; value: PaixExpressionNode } | { action: string }>;
+  steps: Array<{ state: string; value: PaixExpressionNode } | { action: string } | { goTo: string }>;
 }
 export interface PaixActionsNode {
   type: "Actions";

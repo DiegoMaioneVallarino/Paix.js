@@ -1,3 +1,4 @@
+import { NavigationRuntime, usePaixNavigation, type NavigationMode } from "./NavigationRuntime";
 import { composeStyle } from "../paix/compiler/styleTags";
 import { createComponentActions } from "./componentActions";
 import { inferComponentInputs, resolveComponentArguments } from "./resolveComponentArguments";
@@ -36,11 +37,13 @@ import {
 } from "./StyleRuntime";
 registerStandardLibrary();
 interface PaixRendererProps {
+  navigation?: NavigationMode;
   program: PaixCompiledProject;
 }
-export function PaixRenderer({
-  program,
-}: PaixRendererProps) {
+export function PaixRenderer({program,navigation="memory"}: PaixRendererProps) {
+  return <NavigationRuntime program={program} mode={navigation}>{selected=><PageRuntime key={selected.entryPage?.address ?? selected.entryPage?.name} program={selected}/>}</NavigationRuntime>;
+}
+function PageRuntime({program}: PaixRendererProps) {
   if (!program.entryPage) {
     return (
       <div className="paix-runtime-empty">
@@ -49,6 +52,10 @@ export function PaixRenderer({
     );
   }
   const page = program.entryPage;
+  if (page.address && program.wireframes[page.wireframe]) return <div className="paix-page">
+    <PaixStyleSheet styles={program.styles}/>
+    <UserDefinedComponent definition={{...page,type:"ComponentDefinition",style:page.style ?? null,states:page.states ?? []}} suppliedValues={{}} program={program} stack={[]}/>
+  </div>;
   const wireframe =
     program.wireframes[page.wireframe];
   if (wireframe) {
@@ -381,6 +388,7 @@ function UserDefinedComponent({
   inspect = false,
 }: UserDefinedComponentProps) {
   const preview = usePreviewRuntime();
+  const navigate = usePaixNavigation();
   const publish = preview?.publish;
   const resolvedInputs: PaixScope = { ...suppliedValues };
   const initialScope: PaixScope = {
@@ -406,7 +414,7 @@ function UserDefinedComponent({
     [PAIX_INPUTS_SCOPE_KEY]:
       resolvedInputs,
   };
-  localScope.actions = createComponentActions(definition.actions ?? [], localScope, setState);
+  localScope.actions = createComponentActions(definition.actions ?? [], localScope, setState, navigate);
   const wireframe =
     program.wireframes[
       definition.wireframe

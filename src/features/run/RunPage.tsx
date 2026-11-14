@@ -23,5 +23,5 @@ export function RunPage() {
     <p>{run.message || "Corrige estos errores en el editor y pulsa Run de nuevo."}</p>
     {errors.length > 0 && <ul>{errors.map((error, index) => <li key={index}>{error.filePath}:{error.line}:{error.column} — {error.message}</li>)}</ul>}
   </main>;
-  return <main className="paix-run-page"><PaixRenderer program={run.program} /></main>;
+  return <main className="paix-run-page"><PaixRenderer program={run.program} navigation="hash" /></main>;
 }
