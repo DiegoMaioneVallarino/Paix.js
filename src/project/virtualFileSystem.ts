@@ -61,12 +61,11 @@ export function createPaixFile(
     };
   }
 
-  if (type === "page" && Object.values(project.files).some(file=>file.type === "page" && file.name.toLowerCase()===`${name}.paix`.toLowerCase())) return {ok:false,error:`Page "${name}" already exists.`};
+  if (type === "page" && Object.values(project.files).some(file=>file.type === "page" && file.name.replace(/(?:\.page)?\.paix$/i, "").toLowerCase()===name.toLowerCase())) return {ok:false,error:`Page "${name}" already exists.`};
   if (type === "page" && options.address && !/^\/(?:[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*)?\/?$/.test(options.address)) return {ok:false,error:'Use a local address such as /catalogue.'};
-  const owner = undefined;
-  const suffix = type === "wireframe" ? "frame" : type === "style" ? "style" : "actions";
+  
   const folder = type === "component" || type === "page" ? `${folderByType[type]}/${name}` : folderByType[type];
-  const path = owner && type !== "component" ? `${folder}/${name}.${suffix}.paix` : `${folder}/${name}.paix`;
+  const path = `${folder}/${name}${type === "page" ? ".page" : ""}.paix`;
   if (type === "component" && Object.values(project.files).some(file => file.type === "component" && file.name.toLowerCase() === `${name}.paix`.toLowerCase())) {
     return { ok: false, error: `Component "${name}" already exists.` };
   }
@@ -118,7 +117,7 @@ function normalizeFileName(
   const trimmedName = rawName.trim();
 
   if (trimmedName.toLowerCase().endsWith(".paix")) {
-    return trimmedName.slice(0, -5).trim();
+    return trimmedName.replace(/(?:\.page)?\.paix$/i, "").trim();
   }
 
   return trimmedName;
@@ -179,6 +178,6 @@ function createCompanions(folder: string, name: string, options: CreationOptions
 }
 
 export function makeCompanion(owner: PaixFile, kind: "frame" | "style" | "actions"): PaixFile {
-  const path=owner.path.replace(/\.paix$/,`.${kind}.paix`);
+  const path=owner.path.replace(/(?:\.page)?\.paix$/,`.${kind}.paix`);
   return {id:createFileId(kind==='frame'?'wireframe':kind==='style'?'style':'action'),path,name:path.split('/').at(-1)!,type:kind==='frame'?'wireframe':kind==='style'?'style':'action',content:'',enabled:true};
 }

@@ -164,11 +164,11 @@ const inspectedComponent:
     <section className="workbench">
       <header className="workbench-header">
         <div className="brand">
-                    <img
+                    <div className="brandSg"><img
                     className="brand-logo"
                     src="/images/logo.png"
                     alt="Paix"
-/>
+/></div>
           <div>
             <strong>
               p<b className="ai-brand-text">ai</b>x
@@ -221,7 +221,7 @@ const inspectedComponent:
 </div>
       </header>
       {runError && <div role="alert">{runError}</div>}
-      {exportMessage && <div role="status">{exportMessage}</div>}
+      {exportMessage && <div className="export-notice"><span role="status">{exportMessage}</span><button type="button" aria-label="Cerrar aviso" onClick={() => setExportMessage("")}>×</button></div>}
 
       <div className="workbench-content">
         <FileExplorer />

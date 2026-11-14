@@ -2,7 +2,7 @@ import type { PaixFile } from '../../project/project.types';
 import { FileTypeIcon } from './FileTypeIcon';
 import { fileVisualState, isCompanion, isEmptyFile } from '../../project/fileStatus';
 interface Props {file:PaixFile;selected:boolean;modified:boolean;onOpen:(path:string)=>void;onToggle?:(path:string)=>void;hasErrors?:boolean;unused?:boolean;onCompanion?:(path:string,kind:'frame'|'style'|'actions')=>void}
-export function FileTreeItem({file,selected,modified,onOpen,onToggle,hasErrors=false,unused=false,onCompanion}:Props) {
+export function FileTreeItem({file,selected,modified,onOpen,onToggle,hasErrors=false,unused=false}:Props) {
  const dim=file.enabled===false || isEmptyFile(file.content) || unused;
  return <div className="file-entry" data-file-state={fileVisualState(file,hasErrors)}>
   <div className="file-entry-line">
@@ -14,6 +14,6 @@ export function FileTreeItem({file,selected,modified,onOpen,onToggle,hasErrors=f
    {isCompanion(file) && onToggle && <button className="file-toggle" aria-label={`${file.enabled===false?'Activar':'Desactivar'} ${file.name}`} aria-pressed={file.enabled!==false} title={unused?'Sin uso: utiliza un frame compartido':file.enabled===false?'Desactivado':'Activo'} onClick={()=>onToggle(file.path)}>{file.enabled===false?'○':'●'}</button>}
   </div>
   {unused && <small className="file-unused">Sin uso · frame compartido</small>}
-  {['component','page'].includes(file.type) && onCompanion && <details className="file-companions"><summary>Hojas hermanas</summary>{(['frame','style','actions'] as const).map(kind=><button key={kind} onClick={()=>onCompanion(file.path,kind)}>Abrir / crear {kind}</button>)}</details>}
+
  </div>;
 }

@@ -6,7 +6,9 @@ const encodeHtml = (text: string) => text.replace(/[&<>"']/g, ch => ({ '&': '&am
 const encodeJson = (value: unknown) => JSON.stringify(value).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
 
 async function download(url: string): Promise<Response> {
-  const response = await fetch(url, { cache: "no-store" });
+  let response: Response;
+  try { response = await fetch(url, { cache: "no-store" }); }
+  catch { throw new Error(`No se pudo descargar ${url}. Comprueba que el servidor sigue activo. Si es paix-export-runtime, ejecuta npm run build:runtime y reinicia npm run dev.`); }
   if (!response.ok || response.headers.get("content-type")?.includes("text/html")) throw new Error(`No se pudo incluir el recurso: ${url}`);
   return response;
 }

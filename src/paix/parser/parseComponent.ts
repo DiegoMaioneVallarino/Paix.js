@@ -61,7 +61,7 @@ export function parsePaixComponent(
   }
 
   const ast = paixAstVisitor.visit(cst) as PaixComponentDefinitionNode;
-  if (!ast.name && filePath) ast.name = filePath.replace(/\\/g, "/").split("/").at(-1)!.replace(/\.paix$/, "");
+  if (!ast.name && filePath) ast.name = filePath.replace(/\\/g, "/").split("/").at(-1)!.replace(/(?:\.page)?\.paix$/, "");
   if (!ast.wireframe && ast.name) ast.wireframe = ast.name + ".frame";
   Object.assign(ast, directives.options);
   if (ast.frame) ast.wireframe = ast.frame;

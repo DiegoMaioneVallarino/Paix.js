@@ -8,8 +8,8 @@ import { expandStyleProperties, mergeStyleProperties } from "./styleTags";
 
 export function bindCompanions(document: PaixComponentDefinitionNode | PaixPageNode, path: string, project: PaixProject,
   wireframes: Record<string, PaixWireframeNode>, styles: Record<string, PaixStyleNode>, tags: Record<string, PaixStyleNode>, diagnostics: PaixDiagnostic[]) {
-  const basename = path.split('/').at(-1)!.replace(/\.paix$/, '');
-  const stem = path.replace(/\.paix$/, '');
+  const basename = path.split('/').at(-1)!.replace(/(?:\.page)?\.paix$/, '');
+  const stem = path.replace(/(?:\.page)?\.paix$/, '');
   const modern = path.slice(0, path.lastIndexOf('/')).endsWith('/' + basename);
   const report = (message: string) => diagnostics.push({source:'semantic',severity:'error',message,filePath:path,line:1,column:1,length:1});
   if (document.frame) document.wireframe = document.frame;

@@ -12,11 +12,11 @@ const sections: Section[] = [
       "address define la URL de una página. goTo, dentro de una acción, cambia la página y su frame. También admite /catalogue#main para ir a un área. Run usa rutas con #; Export genera directorios con index.html para cada dirección.",
       "frame: SharedFrame sustituye el frame hermano sin borrar su código; el explorador lo marca Sin uso. styles acumula tags compartidos y después aplica la hoja propia. actions reutiliza acciones y estados; los valores siguen aislados por instancia. Las definiciones repetidas generan errores.",
       "Usa el círculo de una hoja hermana para activarla o desactivarla. Desactivar conserva el archivo y excluye su contenido de la compilación, Run y Export. Puedes editarla y reactivarla después. El filtro permite ocultar hojas vacías o desactivadas.",
-      "Hojas hermanas permite crear una hoja vacía cuando la necesites. Una hoja vacía activa no aporta contenido. Un componente necesita un frame propio activo o uno compartido; si falta, se informa del error."
+      "El formulario de creación permite elegir las hojas propias. Una hoja vacía activa no aporta contenido. Un componente necesita un frame propio activo o uno compartido; si falta, se informa del error."
     ],
     rows: [["Contenido y activo", "Texto normal, círculo lleno; participa."], ["Vacío", "Texto atenuado, círculo lleno; asociado sin contenido."], ["Desactivado", "Texto atenuado, círculo vacío; conserva código sin participar."], ["Con errores", "Indicador !; el círculo conserva la activación elegida."]],
     examples: [
-      {title: "Página por dirección", file: "pages/Catalogue/Catalogue.paix", code: 'address: "/catalogue"\nframe: CatalogueFrame\nstyles: Glass\nmain >\n    Text(value: "Catálogo")'},
+      {title: "Página por dirección", file: "pages/Catalogue/Catalogue.page.paix", code: 'address: "/catalogue"\nframe: CatalogueFrame\nstyles: Glass\nmain >\n    Text(value: "Catálogo")'},
       {title: "Componente reutilizando hojas", file: "components/OpenCatalogue/OpenCatalogue.paix", code: 'frame: ButtonFrame\nstyles: Glass, Rounded\nactions: Navigation\nmain >\n    Button(label: "Catálogo", onClick: actions.openCatalogue)'},
       {title: "Acción compartida", file: "actions/Navigation.paix", code: 'action openCatalogue:\n    goTo: "/catalogue"'}
     ]
@@ -70,7 +70,7 @@ const sections: Section[] = [
     "examples": [
       {
         "title": "Página",
-        "file": "pages/home.paix",
+        "file": "pages/home.page.paix",
         "code": "page \"home\" MainFrame\nmain.spaces >\n    Counter(label: \"Primero\")\n    Counter(label: \"Segundo\")"
       },
       {

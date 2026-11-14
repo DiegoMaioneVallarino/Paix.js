@@ -20,7 +20,7 @@ const creationCases: Array<{
   {
     type: "page",
     name: "News",
-    path: "pages/News/News.paix",
+    path: "pages/News/News.page.paix",
     declaration: 'address: "/news"',
   },
   {
@@ -69,7 +69,7 @@ describe("Paix virtual file system", () => {
 
       expect(result.file.path).toBe(path);
       expect(result.file.name).toBe(
-        `${name}.paix`,
+        `${name}${type === "page" ? ".page" : ""}.paix`,
       );
 
       expect(result.file.type).toBe(type);

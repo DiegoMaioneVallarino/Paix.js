@@ -7,7 +7,7 @@ export function isEmptyFile(content:string) {
 }
 export function isUnusedFrame(file:PaixFile,project:PaixProject) {
   if(!file.path.endsWith('.frame.paix')) return false;
-  const owner=project.files[file.path.replace(/\.frame\.paix$/,'.paix')];
+  const owner=project.files[file.path.replace(/\.frame\.paix$/,'.paix')] ?? project.files[file.path.replace(/\.frame\.paix$/,'.page.paix')];
   return Boolean(owner && readDocumentOptions(owner.content).options.frame);
 }
 export function fileVisualState(file:PaixFile,hasErrors=false) {

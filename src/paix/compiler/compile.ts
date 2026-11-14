@@ -24,7 +24,7 @@ export function compilePaixProject(
 ): PaixCompiledProject {
   const inactive = new Set(Object.values(project.files).filter(file => file.enabled === false).map(file => file.path));
   for (const file of Object.values(project.files)) if (file.type === "component" || file.type === "page") {
-    if (readDocumentOptions(file.content).options.frame) inactive.add(file.path.replace(/\.paix$/, ".frame.paix"));
+    if (readDocumentOptions(file.content).options.frame) inactive.add(file.path.replace(/(?:\.page)?\.paix$/, ".frame.paix"));
   }
   project = { ...project, files: Object.fromEntries(Object.entries(project.files).filter(([path]) => !inactive.has(path))) };
   const pages: Record<string, PaixPageNode> = {};
@@ -71,7 +71,7 @@ const componentSourcePaths: Record<
     diagnostics.push(...result.diagnostics.map(d=>({...d,filePath:file.path})));
     if (!result.ast) continue;
     const page = result.ast;
-    page.address ??= file.path === project.entry ? "/" : "/" + file.name.replace(/\.paix$/, "").toLowerCase();
+    page.address ??= file.path === project.entry ? "/" : "/" + file.name.replace(/(?:\.page)?\.paix$/, "").toLowerCase();
     if (pages[page.address]) diagnostics.push({source:"semantic",severity:"error",message:`Duplicate page address "${page.address}".`,filePath:file.path,line:1,column:1,length:1});
     else pages[page.address] = page;
     pagePaths.set(page,file.path);

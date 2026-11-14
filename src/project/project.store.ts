@@ -1,3 +1,4 @@
+import { normalizePageFiles } from "./pageFileNames";
 import { create } from "zustand";
 
 import {
@@ -44,7 +45,7 @@ export interface ProjectStore {
 }
 
 function createInitialProject(): PaixProject {
-  return structuredClone(counterProject);
+  return normalizePageFiles(structuredClone(counterProject)).project;
 }
 
 export const useProjectStore =
@@ -52,7 +53,7 @@ export const useProjectStore =
     persist(
       (set, get) => ({
         project: createInitialProject(),
-        activeFilePath: counterProject.entry,
+        activeFilePath: createInitialProject().entry,
 
         openFolders: [
           "pages",
@@ -227,7 +228,7 @@ export const useProjectStore =
           set({
             project: createInitialProject(),
             activeFilePath:
-              counterProject.entry,
+              createInitialProject().entry,
 
             openFolders: [
               "pages",
@@ -245,6 +246,15 @@ export const useProjectStore =
       {
         name: PAIX_PROJECT_STORAGE_KEY,
         version: 1,
+        merge: (persisted, current) => {
+          const saved = persisted as Partial<ProjectStore> | undefined;
+          if (!saved?.project) return current;
+          const { project, renamed } = normalizePageFiles(saved.project);
+          return { ...current, ...saved, project,
+            activeFilePath: renamed[saved.activeFilePath ?? ""] ?? saved.activeFilePath ?? project.entry,
+            modifiedFiles: (saved.modifiedFiles ?? []).map(path => renamed[path] ?? path),
+          };
+        },
 
         storage: createJSONStorage(
           () => localStorage,

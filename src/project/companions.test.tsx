@@ -83,3 +83,14 @@ test('empty active companion files remain valid and do not add visual or action 
  }
  expect(compilePaixProject(project).diagnostics).toEqual([]);
 });
+
+test('creates .page.paix and binds siblings without a duplicated .page suffix',()=>{
+ const created=createPaixFile(demo(),'page','New.page.paix',{ownFrame:true,ownStyle:true,ownActions:true});
+ if(!created.ok)throw Error(created.error);
+ expect(created.file.path).toBe('pages/New/New.page.paix');
+ const project=demo();project.files[created.file.path]=created.file;
+ for(const file of created.companions??[])project.files[file.path]=file;
+ const compiled=compilePaixProject(project);
+ expect(compiled.diagnostics).toEqual([]);
+ expect(compiled.pages?.['/new'].wireframe).toBe('New.frame');
+});
